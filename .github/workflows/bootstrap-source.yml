@@ -3,7 +3,11 @@ name: Bootstrap source
 on:
   push:
     paths:
-      - 'vivatech-commerce-source.tar.gz.b64'
+      - 'source.part1.b64'
+      - 'source.part2.b64'
+      - 'source.part3.b64'
+      - 'source.part4.b64'
+      - 'source.part5.b64'
       - '.github/workflows/bootstrap-source.yml'
   workflow_dispatch:
 
@@ -18,8 +22,11 @@ jobs:
       - name: Restore project source
         shell: bash
         run: |
-          base64 -d vivatech-commerce-source.tar.gz.b64 > /tmp/vivatech-commerce-source.tar.gz
+          cat source.part1.b64 source.part2.b64 source.part3.b64 source.part4.b64 source.part5.b64 > /tmp/source.b64
+          base64 -d /tmp/source.b64 > /tmp/vivatech-commerce-source.tar.gz
+          gzip -t /tmp/vivatech-commerce-source.tar.gz
           tar -xzf /tmp/vivatech-commerce-source.tar.gz
+          rm -f source.part1.b64 source.part2.b64 source.part3.b64 source.part4.b64 source.part5.b64
           rm -f vivatech-commerce-source.tar.gz.b64
           rm -f .github/workflows/bootstrap-source.yml
       - name: Commit restored source
@@ -30,5 +37,3 @@ jobs:
           git add -A
           git commit -m 'Import Vivatech Commerce Stage 15 source [skip ci]' || exit 0
           git push
-
-# bootstrap trigger
