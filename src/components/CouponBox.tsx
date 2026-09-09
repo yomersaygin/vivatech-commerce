@@ -1,0 +1,4 @@
+'use client';
+import { FormEvent, useState } from 'react';import { useCart } from './CartProvider';
+const money=(v:number)=>v.toLocaleString('tr-TR',{style:'currency',currency:'TRY'});
+export function CouponBox(){const {coupon,discount,couponBusy,applyCoupon,clearCoupon}=useCart();const [code,setCode]=useState(coupon?.code||'');async function submit(e:FormEvent){e.preventDefault();await applyCoupon(code)}return <div className="coupon-box"><strong>İndirim Kuponu</strong><form onSubmit={submit}><input value={code} onChange={e=>setCode(e.target.value)} placeholder="Kupon kodu"/><button disabled={couponBusy} type="submit">{couponBusy?'Kontrol…':'Uygula'}</button></form>{coupon?.message&&<small className="coupon-error">{coupon.message}</small>}{discount>0&&<div className="coupon-ok"><span>{coupon?.code}</span><b>−{money(discount)}</b><button onClick={clearCoupon}>Kaldır</button></div>}</div>}

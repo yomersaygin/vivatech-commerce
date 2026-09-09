@@ -1,0 +1,17 @@
+'use client';
+import { FormEvent, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
+type Banner={id:string;title:string;subtitle:string|null;image_url:string|null;link_url:string|null;button_text:string|null;sort_order:number;starts_at:string|null;ends_at:string|null;is_active:boolean};
+
+export default function BannersPage(){
+  const [items,setItems]=useState<Banner[]>([]); const [msg,setMsg]=useState('');
+  async function load(){const {data,error}=await supabase.from('site_banners').select('*').order('sort_order').order('created_at',{ascending:false}); if(error)setMsg(error.message); setItems((data||[]) as Banner[])}
+  useEffect(()=>{load()},[]);
+  async function add(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const {error}=await supabase.from('site_banners').insert({title:String(f.get('title')),subtitle:String(f.get('subtitle')||''),image_url:String(f.get('image_url')||'')||null,link_url:String(f.get('link_url')||'')||null,button_text:String(f.get('button_text')||'')||null,sort_order:Number(f.get('sort_order')||0),starts_at:f.get('starts_at')?new Date(String(f.get('starts_at'))).toISOString():null,ends_at:f.get('ends_at')?new Date(String(f.get('ends_at'))).toISOString():null,is_active:true});setMsg(error?error.message:'Banner eklendi');if(!error){e.currentTarget.reset();load()}}
+  async function toggle(id:string,current:boolean){const {error}=await supabase.from('site_banners').update({is_active:!current}).eq('id',id);setMsg(error?error.message:'Banner güncellendi');if(!error)load()}
+  async function remove(id:string){if(!confirm('Banner silinsin mi?'))return;const {error}=await supabase.from('site_banners').delete().eq('id',id);setMsg(error?error.message:'Banner silindi');if(!error)load()}
+  return <div><div className="page-head"><div><h1>Ana Sayfa Bannerları</h1><p className="muted">Ana sayfanın üst bölümünde gösterilecek kampanya bannerlarını yönetin.</p></div></div>{msg&&<div className="notice">{msg}</div>}
+  <div className="content-admin-grid"><section className="form-card"><h2>Yeni Banner</h2><form onSubmit={add} className="form-grid two"><label className="full">Başlık<input required name="title"/></label><label className="full">Alt metin<textarea name="subtitle" rows={3}/></label><label className="full">Görsel URL<input name="image_url" placeholder="https://..."/></label><label>Buton yazısı<input name="button_text" placeholder="Ürünleri İncele"/></label><label>Buton bağlantısı<input name="link_url" placeholder="/products"/></label><label>Sıra<input type="number" name="sort_order" defaultValue="0"/></label><label>Başlangıç<input type="datetime-local" name="starts_at"/></label><label>Bitiş<input type="datetime-local" name="ends_at"/></label><button className="button" type="submit">Banner Ekle</button></form></section>
+  <section className="form-card"><h2>Banner Listesi</h2><div className="admin-card-list">{items.length===0?<div className="empty">Henüz banner yok.</div>:items.map(x=><div className="admin-content-card" key={x.id}><div><b>{x.title}</b><small>{x.subtitle||'Alt metin yok'}</small><small>Sıra: {x.sort_order} · {x.is_active?'Aktif':'Pasif'}</small></div><div className="admin-content-actions"><button className="link-button" onClick={()=>toggle(x.id,x.is_active)}>{x.is_active?'Pasif Yap':'Aktif Yap'}</button><button className="link-button danger" onClick={()=>remove(x.id)}>Sil</button></div></div>)}</div></section></div></div>
+}
