@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { StoreHeader } from '@/components/StoreHeader';
 import { AddToCartButton } from '@/components/AddToCartButton';
+import { RecoveryRedirect } from '@/components/RecoveryRedirect';
 import { createPublicServerClient } from '@/lib/supabase-public-server';
 import styles from './home.module.css';
 
@@ -25,7 +26,7 @@ export default async function Home(){
   {title:'WiFi Kameralar',desc:'Kolay Kurulum\nAkıllı Güvenlik',query:'WiFi',tone:'cyan'},
   {title:'PTZ Kameralar',desc:'360° Görüş\nTam Kontrol',query:'PTZ',tone:'gray'},
  ];
- return <main className="store"><StoreHeader/>
+ return <main className="store"><RecoveryRedirect/><StoreHeader/>
   <section className={styles.hero} style={hero?.image_url?{backgroundImage:`linear-gradient(90deg,rgba(5,23,42,.96) 0%,rgba(5,23,42,.73) 46%,rgba(5,23,42,.18) 100%),url(${hero.image_url})`}:undefined}>
    <div className={styles.heroContent}><span className={styles.heroKicker}>4G • Solar • Akıllı Takip</span><h1>{hero?.title||'Güvenliğin Akıllı Hali'}</h1><p>{hero?.subtitle||'Evinizi, iş yerinizi ve sevdiklerinizi her zaman güvende tutun. Vivatech akıllı güvenlik kameraları ile kontrol her zaman sizde.'}</p><div className={styles.heroButtons}><Link className={styles.primaryButton} href={hero?.link_url||'/products'}>{hero?.button_text||'Ürünleri İncele'} →</Link><Link className={styles.secondaryButton} href="#kategoriler">▦ Kategorileri Gör</Link></div><div className={styles.features}><span>▣ <b>Uzaktan İzleme</b><small>Mobil Uygulama</small></span><span>◉ <b>Hareket Algılama</b><small>Anında Bildirim</small></span><span>◐ <b>Renkli Gece Görüş</b><small>Daha Net Görüntü</small></span><span>◍ <b>Çift Yönlü Ses</b><small>Her Zaman İletişim</small></span></div></div>
    {!hero?.image_url&&<div className={styles.heroProduct}><div className={styles.cameraMock}>VIVATECH<br/>SMART SECURITY</div><span>Her An • Her Yerden<br/>Kontrol Sizde</span></div>}
