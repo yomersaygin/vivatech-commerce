@@ -9,11 +9,12 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-smoke:
     runs-on: ubuntu-latest
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://grlicywrvkyeowsmbtaz.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build_verification_placeholder_key
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,40 +24,43 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
-
-  production-smoke:
-    if: github.event_name == 'push'
-    needs: build
-    runs-on: ubuntu-latest
-    env:
-      PROD_URL: https://vivatech-commerce-git-main-yomersaygin-1229s-projects.vercel.app
-    steps:
-      - name: Wait for this commit to reach production
+      - name: Start production server
+        shell: bash
+        run: |
+          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/vivatech-next.log 2>&1 &
+          echo $! > /tmp/vivatech-next.pid
+      - name: Wait for production server
         shell: bash
         run: |
           set -euo pipefail
           for attempt in $(seq 1 30); do
-            body="$(curl -fsS --max-time 15 "$PROD_URL/api/health" || true)"
-            if printf '%s' "$body" | grep -q "\"commit\":\"$GITHUB_SHA\""; then
-              echo "Production is running commit $GITHUB_SHA"
+            if curl -fsS --max-time 10 http://127.0.0.1:3000/api/health >/dev/null; then
+              echo "Production server is ready"
               exit 0
             fi
-            echo "Waiting for Vercel production deployment ($attempt/30)..."
-            sleep 10
+            sleep 2
           done
-          echo "Timed out waiting for production deployment of $GITHUB_SHA"
+          cat /tmp/vivatech-next.log || true
+          echo "Local production server did not become ready"
           exit 1
-
-      - name: Smoke test public routes
+      - name: Smoke test critical routes
         shell: bash
         run: |
           set -euo pipefail
           routes=("/" "/products" "/account" "/checkout" "/api/health")
           for route in "${routes[@]}"; do
-            code="$(curl -L -sS -o /dev/null -w '%{http_code}' --max-time 20 "$PROD_URL$route")"
+            code="$(curl -L -sS -o /dev/null -w '%{http_code}' --max-time 20 "http://127.0.0.1:3000$route")"
             echo "$route -> HTTP $code"
             if [ "$code" -lt 200 ] || [ "$code" -ge 400 ]; then
+              cat /tmp/vivatech-next.log || true
               echo "Smoke test failed for $route"
               exit 1
             fi
           done
+      - name: Stop production server
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/vivatech-next.pid ]; then
+            kill "$(cat /tmp/vivatech-next.pid)" || true
+          fi
