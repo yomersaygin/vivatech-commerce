@@ -7,6 +7,7 @@ import { CouponBox } from '@/components/CouponBox';
 import { supabase } from '@/lib/supabase';
 const money=(v:number)=>v.toLocaleString('tr-TR',{style:'currency',currency:'TRY'});
 type Address={id:string;title:string|null;full_name:string;phone:string|null;city:string;district:string;address_line:string;postal_code:string|null;is_default:boolean};
+type CreatedOrder={order_id:string;order_number:string};
 export default function CheckoutPage(){
  const {items,coupon,discount,total,clearCart}=useCart(); const [user,setUser]=useState<any>(undefined); const [customerId,setCustomerId]=useState(''); const [addresses,setAddresses]=useState<Address[]>([]); const [selectedAddress,setSelectedAddress]=useState(''); const [addressMode,setAddressMode]=useState<'saved'|'new'>('new'); const [busy,setBusy]=useState(false); const [result,setResult]=useState<{order?:string,error?:string}>({});
  useEffect(()=>{(async()=>{const {data}=await supabase.auth.getUser();setUser(data.user);if(!data.user)return;const {data:customer}=await supabase.from('customers').select('id').eq('auth_user_id',data.user.id).single();if(!customer)return;setCustomerId(customer.id);const {data:list}=await supabase.from('addresses').select('id,title,full_name,phone,city,district,address_line,postal_code,is_default').eq('customer_id',customer.id).order('is_default',{ascending:false}).order('created_at',{ascending:false});const rows=(list||[]) as Address[];setAddresses(rows);if(rows.length){const preferred=rows.find(a=>a.is_default)||rows[0];setSelectedAddress(preferred.id);setAddressMode('saved')}})()},[]);
@@ -15,7 +16,8 @@ export default function CheckoutPage(){
    if(addressMode==='saved'){if(!addressId||!addresses.some(a=>a.id===addressId)){setResult({error:'Lütfen bir teslimat adresi seçin.'});return;}}
    else {const fd=new FormData(e.currentTarget);const {data:address,error:aErr}=await supabase.from('addresses').insert({customer_id:customerId,title:String(fd.get('title')||'Teslimat').trim(),full_name:String(fd.get('full_name')||'').trim(),phone:String(fd.get('phone')||'').trim(),city:String(fd.get('city')||'').trim(),district:String(fd.get('district')||'').trim(),address_line:String(fd.get('address')||'').trim(),postal_code:String(fd.get('postal_code')||'').trim()||null,is_default:addresses.length===0}).select('id').single();if(aErr||!address){setResult({error:'Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.'});return;}addressId=address.id;}
    const payload=items.map(x=>({product_id:x.id,quantity:x.quantity}));
-   const {data:created,error:oErr}=await supabase.rpc('create_customer_order_with_stock_v3',{p_shipping_address_id:addressId,p_items:payload,p_notes:null,p_coupon_code:coupon?.code||null}).single();
+   const {data,error:oErr}=await supabase.rpc('create_customer_order_with_stock_v3',{p_shipping_address_id:addressId,p_items:payload,p_notes:null,p_coupon_code:coupon?.code||null}).single();
+   const created=data as CreatedOrder|null;
    if(oErr||!created?.order_number){setResult({error:'Sipariş oluşturulamadı. Stok ve sepet bilgilerinizi kontrol edip tekrar deneyin.'});return;}
    clearCart();setResult({order:created.order_number});
   }catch{setResult({error:'Sipariş oluşturulurken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.'})}finally{setBusy(false)}
