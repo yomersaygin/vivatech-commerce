@@ -15,10 +15,8 @@ export default function CheckoutPage(){
    if(addressMode==='saved'){if(!addressId||!addresses.some(a=>a.id===addressId)){setResult({error:'Lütfen bir teslimat adresi seçin.'});return;}}
    else {const fd=new FormData(e.currentTarget);const {data:address,error:aErr}=await supabase.from('addresses').insert({customer_id:customerId,title:String(fd.get('title')||'Teslimat').trim(),full_name:String(fd.get('full_name')||'').trim(),phone:String(fd.get('phone')||'').trim(),city:String(fd.get('city')||'').trim(),district:String(fd.get('district')||'').trim(),address_line:String(fd.get('address')||'').trim(),postal_code:String(fd.get('postal_code')||'').trim()||null,is_default:addresses.length===0}).select('id').single();if(aErr||!address){setResult({error:'Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.'});return;}addressId=address.id;}
    const payload=items.map(x=>({product_id:x.id,quantity:x.quantity}));
-   const {data:orderId,error:oErr}=await supabase.rpc('create_customer_order_with_stock_v2',{p_order_number:'AUTO',p_shipping_address_id:addressId,p_items:payload,p_notes:null,p_coupon_code:coupon?.code||null});
-   if(oErr||!orderId){setResult({error:'Sipariş oluşturulamadı. Stok ve sepet bilgilerinizi kontrol edip tekrar deneyin.'});return;}
-   const {data:created,error:readErr}=await supabase.from('orders').select('order_number').eq('id',orderId).eq('customer_id',customerId).single();
-   if(readErr||!created){setResult({error:'Sipariş oluşturuldu ancak sipariş numarası görüntülenemedi. Siparişlerim sayfasından kontrol edebilirsiniz.'});clearCart();return;}
+   const {data:created,error:oErr}=await supabase.rpc('create_customer_order_with_stock_v3',{p_shipping_address_id:addressId,p_items:payload,p_notes:null,p_coupon_code:coupon?.code||null}).single();
+   if(oErr||!created?.order_number){setResult({error:'Sipariş oluşturulamadı. Stok ve sepet bilgilerinizi kontrol edip tekrar deneyin.'});return;}
    clearCart();setResult({order:created.order_number});
   }catch{setResult({error:'Sipariş oluşturulurken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.'})}finally{setBusy(false)}
  }
