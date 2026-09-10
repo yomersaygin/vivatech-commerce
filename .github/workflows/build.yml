@@ -23,3 +23,40 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
+
+  production-smoke:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      PROD_URL: https://vivatech-commerce-git-main-yomersaygin-1229s-projects.vercel.app
+    steps:
+      - name: Wait for this commit to reach production
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            body="$(curl -fsS --max-time 15 "$PROD_URL/api/health" || true)"
+            if printf '%s' "$body" | grep -q "\"commit\":\"$GITHUB_SHA\""; then
+              echo "Production is running commit $GITHUB_SHA"
+              exit 0
+            fi
+            echo "Waiting for Vercel production deployment ($attempt/30)..."
+            sleep 10
+          done
+          echo "Timed out waiting for production deployment of $GITHUB_SHA"
+          exit 1
+
+      - name: Smoke test public routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          routes=("/" "/products" "/account" "/checkout" "/api/health")
+          for route in "${routes[@]}"; do
+            code="$(curl -L -sS -o /dev/null -w '%{http_code}' --max-time 20 "$PROD_URL$route")"
+            echo "$route -> HTTP $code"
+            if [ "$code" -lt 200 ] || [ "$code" -ge 400 ]; then
+              echo "Smoke test failed for $route"
+              exit 1
+            fi
+          done
