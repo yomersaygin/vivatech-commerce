@@ -22,6 +22,8 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
       - name: Build
         run: npm run build
       - name: Start production server
@@ -57,6 +59,26 @@ jobs:
               exit 1
             fi
           done
+      - name: Verify health contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --max-time 20 http://127.0.0.1:3000/api/health)"
+          node -e 'const x=JSON.parse(process.argv[1]); if(x.status!=="ok"||x.service!=="vivatech-commerce"||!x.timestamp) process.exit(1); console.log("Health contract OK")' "$body"
+      - name: Verify customer entry flows
+        shell: bash
+        run: |
+          set -euo pipefail
+          account="$(curl -fsS --max-time 20 http://127.0.0.1:3000/account)"
+          checkout="$(curl -fsS --max-time 20 http://127.0.0.1:3000/checkout)"
+          products="$(curl -fsS --max-time 20 http://127.0.0.1:3000/products)"
+          printf '%s' "$account" | grep -q 'Hesabım'
+          printf '%s' "$account" | grep -q 'Giriş Yap'
+          printf '%s' "$account" | grep -q 'Üye Ol'
+          printf '%s' "$checkout" | grep -q 'Siparişi Tamamla'
+          printf '%s' "$checkout" | grep -q 'Giriş Yap / Üye Ol'
+          printf '%s' "$products" | grep -qi 'ürün'
+          echo "Customer entry flow assertions OK"
       - name: Stop production server
         if: always()
         shell: bash
