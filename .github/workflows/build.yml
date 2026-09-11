@@ -24,8 +24,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Lint
         run: npm run lint
-      - name: Test cart business rules
-        run: node --experimental-strip-types --test tests/cart.test.mjs
+      - name: Test business rules and checkout contracts
+        run: node --experimental-strip-types --test tests/*.test.mjs
       - name: Build
         run: npm run build
       - name: Start production server
