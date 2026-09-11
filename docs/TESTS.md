@@ -2,13 +2,14 @@
 
 ## Otomatik CI / Production-Mode Smoke
 - PASS: GitHub Actions Node 22 bağımlılık kurulumu.
-- PASS: `npm run lint` tamamlanıyor; mevcut legacy uyarılar görünür kalıyor fakat build'i bloke etmiyor.
+- PASS: `npm run lint` — 0 uyarı / 0 hata.
+- PASS: `@typescript-eslint/no-explicit-any` CI'da ERROR seviyesinde; yeni kontrolsüz `any` kullanımı build'i durdurur.
 - PASS: `npm run build` gerçek Next.js production build.
 - PASS: `npm start` ile production sunucusu ayağa kalkıyor.
 - PASS: `/`, `/products`, `/account`, `/checkout`, `/api/health` HTTP smoke testleri.
 - PASS: `/api/health` sözleşmesi (`status=ok`, `service=vivatech-commerce`, timestamp).
 - PASS: müşteri giriş/checkout kritik kaynak sözleşmeleri.
-- Son tam doğrulama: GitHub Actions Build #52 — SUCCESS.
+- Son tam doğrulama: GitHub Actions Build #67 — SUCCESS.
 
 ## Sepet ve Checkout
 - PASS: cartSubtotal matematik kontrolü.
@@ -20,6 +21,7 @@
 - PASS: güncel checkout `create_customer_order_with_stock_v3` RPC kullanıyor.
 - PASS: sipariş numarası veritabanı tarafından üretiliyor ve V3 RPC doğrudan geri döndürüyor.
 - PASS: eski V2 RPC authenticated kullanıcıdan kapalı; yalnız service_role erişimi bırakıldı.
+- PASS: CartProvider kupon cevabı explicit type ile işleniyor; hook dependency uyarıları giderildi.
 - PENDING: güncel V3 checkout akışının gerçek oturumlu tarayıcı E2E testi.
 
 ## Gerçek Sipariş ve Stok Akışı
@@ -48,6 +50,7 @@
 - PASS: müşteri `auth_user_id` ve adres `customer_id` sahiplik alanlarını değiştiremiyor.
 - PASS: siparişte kullanılmış adres silinemez.
 - PASS: ilk adres otomatik varsayılan; tek varsayılan adres kuralı DB seviyesinde korunuyor.
+- PASS: müşteri hesap/sipariş/adres/profile sayfalarındaki lint/type borcu temizlendi.
 - PENDING: güncel profil/adres ekranlarının gerçek authenticated browser UI E2E testi.
 
 ## Sipariş Geçmişi Bütünlüğü
@@ -72,6 +75,7 @@
 - PASS: stock_movements quantity > 0 constraint.
 - PASS: order cancellation için duplicate return movement unique koruması.
 - PASS: anon/authenticated doğrudan stock_movements yazamaz.
+- PASS: ürün formundaki görsel önizleme Next Image bileşenine geçirildi; ilgili lint uyarısı kaldırıldı.
 
 ## Kupon ve Kampanya
 - PASS: yüzde kupon hesabı.
@@ -81,6 +85,7 @@
 - PASS: kupon tarih/değer/limit constraint'leri.
 - PASS: kupon kodu case-insensitive unique.
 - PASS: public kupon wrapper çalışıyor; kritik hesaplama helper'ları private schema içinde.
+- PASS: admin kampanya/kupon sayfasındaki gevşek `any` tipleri kaldırıldı.
 - PENDING: gerçek authenticated browser checkout + kupon E2E testi.
 
 ## Kargo Takibi
@@ -95,6 +100,7 @@
 - PASS: admin order detail nested relation erişimleri doğrulandı.
 - PASS: sipariş durum geçişleri DB tarafından kontrol ediliyor.
 - PASS: takip URL'si UI seviyesinde http/https doğrulamasına sahip.
+- PASS: admin sipariş liste/detay sayfalarındaki `any` ve hook dependency uyarıları temizlendi.
 - PENDING: güncel admin ekranlarının gerçek browser UI E2E testi.
 
 ## Aşama 14–15
