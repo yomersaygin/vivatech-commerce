@@ -22,6 +22,11 @@ test('customer can only request cancellation before shipment', () => {
   assert.doesNotMatch(source, /\['new','confirmed','preparing','shipped'/);
 });
 
+test('paid orders do not expose direct customer cancellation', () => {
+  assert.match(source, /order\.payment_status!=='paid'/);
+  assert.match(source, /Ödemesi tamamlanmış siparişler doğrudan iptal edilemez/);
+});
+
 test('shipping history is rendered from immutable snapshot', () => {
   assert.match(source, /shipping_address_snapshot/);
   assert.doesNotMatch(source, /addresses\(/);
