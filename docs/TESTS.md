@@ -1,73 +1,122 @@
-# Test Durumu — Aşama 6
+# Vivatech Commerce — Güncel Test Durumu
 
-- [x] cartSubtotal matematik kontrolü
-- [x] cartCount toplam adet kontrolü
-- [x] stok üstü adet clamp kontrolü
-- [x] 0 stok ürün sepete eklenmez kuralı
-- [x] Sepet UI bileşenleri oluşturuldu
-- [x] Checkout formu oluşturuldu
-- [ ] Tam Next.js production build (ortamda bağımlılık kurulumu gerekir)
-- [ ] Gerçek tarayıcı E2E testi
-- [ ] Gerçek sipariş veritabanı kaydı (Aşama 7)
+## Otomatik CI / Production-Mode Smoke
+- PASS: GitHub Actions Node 22 bağımlılık kurulumu.
+- PASS: `npm run lint` tamamlanıyor; mevcut legacy uyarılar görünür kalıyor fakat build'i bloke etmiyor.
+- PASS: `npm run build` gerçek Next.js production build.
+- PASS: `npm start` ile production sunucusu ayağa kalkıyor.
+- PASS: `/`, `/products`, `/account`, `/checkout`, `/api/health` HTTP smoke testleri.
+- PASS: `/api/health` sözleşmesi (`status=ok`, `service=vivatech-commerce`, timestamp).
+- PASS: müşteri giriş/checkout kritik kaynak sözleşmeleri.
+- Son tam doğrulama: GitHub Actions Build #52 — SUCCESS.
 
-## Aşama 7
-PASS: checkout RPC anon EXECUTE=false, authenticated EXECUTE=true.
-PASS: public wrapper SECURITY INVOKER; privileged implementation private schema içinde.
-PASS: Supabase security advisor 0 lint.
-PASS: A7 test siparişi veritabanında bırakılmadı (0 kayıt).
-PASS: TypeScript database type generation succeeded after initial gateway timeout.
-NOT PASS YET: gerçek müşteri ile tarayıcıdan signup/login -> checkout -> admin order E2E; test auth hesabı henüz oluşturulmadı.
-NOT PASS YET: next build; npm install çalışma ortamında 45 saniye zaman aşımına uğradı.
+## Sepet ve Checkout
+- PASS: cartSubtotal matematik kontrolü.
+- PASS: cartCount toplam adet kontrolü.
+- PASS: stok üstü adet clamp kontrolü.
+- PASS: 0 stok ürün sepete eklenmez kuralı.
+- PASS: sepet localStorage kalıcılığı.
+- PASS: kayıtlı adres / yeni adres checkout kaynak akışı.
+- PASS: güncel checkout `create_customer_order_with_stock_v3` RPC kullanıyor.
+- PASS: sipariş numarası veritabanı tarafından üretiliyor ve V3 RPC doğrudan geri döndürüyor.
+- PASS: eski V2 RPC authenticated kullanıcıdan kapalı; yalnız service_role erişimi bırakıldı.
+- PENDING: güncel V3 checkout akışının gerçek oturumlu tarayıcı E2E testi.
 
-- A8 iptal stok testi: PASS (16 -> 18)
-- A8 ikinci iptal testi: PASS (stok 18 kaldı, return_in sayısı 1)
-- A8 geçici test siparişi temizliği: PASS
+## Gerçek Sipariş ve Stok Akışı
+- PASS: gerçek authenticated sipariş oluşturma önceki V2 akışında doğrulandı.
+- PASS: sipariş satırı, stok düşümü ve satış stok hareketi oluştu.
+- PASS: yetersiz stokta transaction tamamen rollback oluyor.
+- PASS: başka müşteriye ait teslimat adresi ile sipariş engelleniyor ve rollback oluyor.
+- PASS: geçersiz ürün UUID ile sipariş engelleniyor ve rollback oluyor.
+- PASS: aynı ürünün birden fazla satırda bulunması stok kontrolünde toplam miktar üzerinden güvenli çalışıyor.
+- PASS: kupon müşteri kullanım limiti aynı müşteri için transaction testiyle doğrulandı.
 
-## Aşama 9
-- [x] Hesap sayfaları kaynak kodu oluşturuldu.
-- [x] Sipariş listesi/detail sorguları RLS altında kullanıcı oturumunu kullanır.
-- [x] Adres CRUD istemci akışı RLS altında kullanıcı customer_id'si ile çalışır.
-- [x] Profil UPDATE mevcut customers self-update RLS politikasını kullanır.
-- [ ] Gerçek iki farklı müşteri hesabıyla cross-user RLS E2E testi (test auth hesapları gerekir).
-- [ ] Tam Next.js production build / browser E2E.
+## Sipariş İptali ve Durum Yönetimi
+- PASS: müşteri iptal RPC sahiplik/durum kontrolü yapıyor.
+- PASS: iptal stok iadesi doğrulandı.
+- PASS: ikinci iptalde çift stok iadesi oluşmuyor.
+- PASS: aynı ürün bir siparişte birden fazla satırdaysa iptal sırasında miktarlar gruplanıp tek stok iadesi hareketi oluşturuluyor.
+- PASS: admin sipariş durum RPC'si SECURITY DEFINER + `is_admin()` kontrolüyle doğrulandı.
+- PASS: normal müşteri admin durum RPC'sini çalıştıramıyor.
+- PASS: teslim edilmiş/iptal edilmiş siparişler terminal durumda.
 
+## Müşteri Hesabı / RLS
+- PASS: müşterinin kendi müşteri kaydı görünür, başka müşteri görünmez.
+- PASS: müşterinin kendi adresleri görünür, başkasının adresleri görünmez.
+- PASS: müşterinin kendi siparişleri ve sipariş satırları görünür, başkasının verileri görünmez.
+- PASS: başka müşterinin profil/adres verilerini update/delete etme engelleniyor.
+- PASS: müşteri `auth_user_id` ve adres `customer_id` sahiplik alanlarını değiştiremiyor.
+- PASS: siparişte kullanılmış adres silinemez.
+- PASS: ilk adres otomatik varsayılan; tek varsayılan adres kuralı DB seviyesinde korunuyor.
+- PENDING: güncel profil/adres ekranlarının gerçek authenticated browser UI E2E testi.
 
-## Aşama 10 — Kargo Takip Testleri
-- PASS: shipping_carrier / tracking_number / tracking_url alanları kaydedildi.
-- PASS: preparing -> shipped durumunda shipped_at otomatik oluştu.
-- PASS: test siparişi temizlendi; geride SHIP-TEST kaydı kalmadı.
-- PASS: Supabase security advisor 0 bulgu.
-- BEKLEMEDE: gerçek admin/müşteri hesabıyla tarayıcı E2E kargo takip testi.
-- BEKLEMEDE: next build, bağımlılık kurulumu ortamda doğrulanmadı.
+## Sipariş Geçmişi Bütünlüğü
+- PASS: `shipping_address_snapshot` mevcut siparişlere backfill edildi.
+- PASS: kayıtlı adres sonradan düzenlense bile geçmiş sipariş snapshot'ı değişmiyor.
+- PASS: sipariş snapshot ve shipping_address_id doğrudan değiştirilemiyor.
+- PASS: sipariş geçmişine bağlı customer/address/order/product silme zincirleri RESTRICT ile korunuyor.
+- PASS: orders_without_customer = 0.
+- PASS: orphan_order_items = 0.
+- PASS: invalid_order_items = 0.
+- PASS: negative_stock_products = 0.
+- PASS: bad_order_totals = 0.
+- PASS: missing_shipping_snapshots = 0.
+- PASS: duplicate_order_numbers = 0.
+- PASS: invalid_stock_movements = 0.
+- PASS: orders_without_items = 0.
 
-## Aşama 12
-- Kupon doğrulama: PASS (%10 / 4.999 TL => 499,90 TL)
-- Minimum sepet kontrolü: PASS (1.000 TL altı engellendi)
-- Kupon kullanım limiti: veritabanı fonksiyonunda uygulanıyor
-- Checkout indirim tutarı: server-side yeniden hesaplanıyor
+## Ürün / Stok Güvenliği
+- PASS: ürün fiyatı, karşılaştırma fiyatı ve stok için negatif değer kontrolleri.
+- PASS: SKU/slug/barcode uniqueness kontrolleri.
+- PASS: normal authenticated kullanıcı doğrudan ürün yazamaz; admin işlemleri RLS ile korunur.
+- PASS: stock_movements quantity > 0 constraint.
+- PASS: order cancellation için duplicate return movement unique koruması.
+- PASS: anon/authenticated doğrudan stock_movements yazamaz.
 
-- Kampanya/kupon test kayıtları temizlendi: PASS
-- Supabase security advisor: PASS (0 finding)
-- Gerçek authenticated checkout + kupon: PENDING (gerçek auth kullanıcı oturumu yok)
+## Kupon ve Kampanya
+- PASS: yüzde kupon hesabı.
+- PASS: minimum sepet kontrolü.
+- PASS: kullanım limiti / müşteri başı limit server-side uygulanıyor.
+- PASS: checkout sırasında indirim server-side yeniden hesaplanıyor.
+- PASS: kupon tarih/değer/limit constraint'leri.
+- PASS: kupon kodu case-insensitive unique.
+- PASS: public kupon wrapper çalışıyor; kritik hesaplama helper'ları private schema içinde.
+- PENDING: gerçek authenticated browser checkout + kupon E2E testi.
 
+## Kargo Takibi
+- PASS: shipping_carrier / tracking_number / tracking_url alanları.
+- PASS: preparing -> shipped geçişinde `shipped_at` oluşuyor.
+- PASS: admin kargo güncelleme yetkisi transaction testinde doğrulandı.
+- PASS: normal müşteri kargo alanlarını güncelleyemiyor.
+- PENDING: gerçek admin/müşteri browser E2E kargo takip testi.
 
-### Aşama 13
-- Aktif banner anon görünürlük: PASS
-- Süresi bitmiş banner anon görünürlük: PASS (0)
-- Aktif içerik anon görünürlük: PASS
-- Geçici test kayıtları temizlendi: PASS
-- Supabase security advisor: PASS (0 lint)
-- Full Next build: NOT PASS / ortam bağımlılıkları kurulu değil
+## Admin Sipariş Ekranları
+- PASS: admin RLS bağlamında sipariş, müşteri, adres ve sipariş satırları görünür.
+- PASS: admin order detail nested relation erişimleri doğrulandı.
+- PASS: sipariş durum geçişleri DB tarafından kontrol ediliyor.
+- PASS: takip URL'si UI seviyesinde http/https doğrulamasına sahip.
+- PENDING: güncel admin ekranlarının gerçek browser UI E2E testi.
 
-## Aşama 14 Testleri
-- DB transaction testi: üç geçici ürün görseli 0,1,2 sırasına getirildi ve yalnızca bir ana görsel kaldığı doğrulandı. Transaction rollback ile test verisi bırakılmadı. PASS.
-- ZIP bütünlük testi: PASS.
-- TypeScript tam derleme: PASS değil. Çalışma ortamında Next.js/React bağımlılıkları kurulu olmadığından tsc modül/type hataları veriyor; bu nedenle tam build doğrulaması yapılmış sayılmıyor.
+## Aşama 14–15
+- PASS: çoklu ürün görseli sıralama / tek ana görsel DB transaction testi.
+- PASS: ürün açıklama/SEO araçları build içinde doğrulanıyor.
+- PASS: `generate-product-copy` Edge Function deploy edilmiş ve JWT zorunlu.
+- PASS: ücretli AI anahtarı olmadan deterministik ücretsiz fallback mevcut.
+- PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
+## Supabase Güvenlik / Performans
+- PASS: kritik private helper'larda anon/authenticated doğrudan EXECUTE yok.
+- PASS: V3 checkout ve müşteri iptal RPC'leri authenticated için kontrollü açık.
+- PASS: admin order status RPC yalnız admin kontrolüyle çalışıyor.
+- PASS: `auth_rls_initplan` = 0.
+- PASS: `multiple_permissive_policies` = 0.
+- NOT BLOCKING: Supabase Free planda Leaked Password Protection kullanılamıyor; ücretli plana geçilmedi.
+- NOT BLOCKING: bilinçli SECURITY DEFINER business RPC advisor uyarıları mevcut; yetkileri zayıflatmak için kapatılmadı.
 
-## Aşama 15 — AI ürün metni
-- Admin ürün formuna AI Açıklama + SEO Oluştur eklendi.
-- Supabase Edge Function `generate-product-copy` deploy edildi ve JWT zorunlu.
-- Zorunlu ücretli servis yok: AI anahtarı yoksa ücretsiz deterministik taslak üretir.
-- AI sağlayıcı anahtarı daha sonra eklenirse aynı endpoint gerçek model çıktısını kullanır.
-- Teknik özellik uydurmamayı hedefleyen prompt kuralı eklendi.
+## Şu Anda Test Edilmiş Sayılmayanlar
+- Gerçek tarayıcı ile güncel V3 signup/login -> checkout -> order -> admin görünürlüğü E2E.
+- Password reset akışının baştan sona gerçek tarayıcı testi; Supabase default mail rate limit nedeniyle önceki deneme tamamlanamadı.
+- Güncel profil/adres/müşteri sipariş ekranlarının gerçek browser UI E2E'si.
+- Güncel admin sipariş ekranlarının gerçek browser UI E2E'si.
+
+Not: Kaynak sözleşmesi, DB transaction testi ve production-mode HTTP smoke testi gerçek browser E2E değildir; dokümanda ayrı kategoriler olarak tutulur.
