@@ -156,4 +156,34 @@ The verified lifecycle is therefore:
 - `failed`: cancellation is allowed and stock returns exactly once.
 - `refunded`: cancellation is allowed and stock returns exactly once; repeated cancellation is idempotent.
 
+## 2026-09-12 — Shipping lifecycle and terminal-order protection
+
+The order shipping lifecycle was verified directly against the live database in rollback-only transactions.
+
+### Shipping lifecycle
+A V3 order was created and advanced through the controlled admin status RPC.
+
+Observed:
+- `new -> preparing -> shipped` succeeded.
+- Entering `shipped` populated `shipped_at` automatically.
+- Shipping carrier, tracking number and HTTP(S) tracking URL were persisted correctly.
+- `shipped -> delivered` succeeded.
+- The original `shipped_at` value remained unchanged after delivery.
+- Rollback left no persistent probe order and restored the product stock to `18`.
+
+### Terminal shipping-field protection
+A gap was found during direct database verification: shipping fields could still be changed on a terminal order by an authenticated admin through a direct table update even though the UI disabled the save button.
+
+Database protection was added so terminal orders cannot have their shipping history rewritten after completion. The protected terminal states are `cancelled` and `delivered`.
+
+Verified after hardening:
+- Updating `shipping_carrier`, `tracking_number`, `tracking_url` or `shipped_at` on a `cancelled` order is blocked by the database trigger.
+- The same protection applies to `delivered` orders.
+- A normal customer direct update of shipping fields affected `0` rows under RLS.
+- After a blocked terminal-order manipulation attempt, the cancelled order's shipping fields remained unchanged.
+
+The resulting rule is:
+- Before terminal state: authorized admin shipping data can be maintained.
+- `cancelled` or `delivered`: shipping history is immutable at the database layer, not only in the UI.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
