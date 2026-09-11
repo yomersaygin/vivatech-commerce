@@ -1,86 +1,56 @@
 # Vivatech Commerce — Proje Durumu
 
 ## Mevcut aşama
-Aşama 6 — Sepet ve checkout temel akışı
+Aşama 21 — Üretim doğrulama ve otomatik smoke-test altyapısı
 
-## Tamamlanan
-- Supabase temel şema ve RLS
+## Tamamlanan ana kapsam
+- Next.js + Supabase + GitHub + Vercel temeli
+- Supabase şema, RLS ve kritik RPC güvenlik sertleştirmeleri
 - Admin giriş/yetkilendirme altyapısı
-- Ürün CRUD + ürün görselleri Storage
-- Kategori/marka CRUD
-- Müşteri mağazası ve ürün detay sayfası
-- Sepete ürün ekleme
-- Sepet localStorage kalıcılığı
-- Adet artır/azalt ve stok sınırı
-- Sepetten ürün kaldırma
-- Ara toplam/ürün toplam hesapları
-- Checkout teslimat formu ve sipariş taslağı özeti
+- Ürün, kategori ve marka CRUD
+- Ürün görsel yönetimi ve Storage
+- Müşteri mağazası, arama/filtreleme ve ürün detayları
+- Sepet, kupon ve checkout akışı
+- Müşteri üyeliği, profil ve adres yönetimi
+- Gerçek sipariş oluşturma, atomik stok düşümü ve stok hareketleri
+- Sipariş iptali ve tek seferlik atomik stok iadesi
+- Admin sipariş listesi, detay, durum geçişleri ve kargo bilgileri
+- Müşteri sipariş geçmişi, detay ve kargo takibi
+- Sipariş teslimat adresi snapshot yapısı
+- Kampanya, kupon, banner ve içerik yönetimi
+- AI ürün açıklaması/SEO endpoint'i; ücretli anahtar yoksa ücretsiz deterministik fallback
+- Ana sayfa ve katalog için Vivatech görsel yönü
 
-## Sonraki
-- Müşteri üyeliği ve adres kaydı
-- Gerçek sipariş oluşturma RPC/API akışı
-- Atomik stok düşümü ile checkout bağlantısı
-- Sipariş başarı ekranı
+## Aşama 20 — Güvenlik ve veri bütünlüğü
+- Sipariş numarası veritabanında üretilir; checkout V3 RPC order_number döndürür.
+- Legacy checkout RPC authenticated role için kapatıldı.
+- Kritik private helper fonksiyonlar doğrudan istemci erişimine kapalıdır.
+- Müşteri, adres, sipariş, order_items ve stok hareketlerinde RLS/ACL sertleştirmeleri yapıldı.
+- Sipariş geçmişini koruyan FK ve silme kısıtları eklendi.
+- Aynı ürünün bir siparişte birden fazla satırda bulunması halinde iptal stok iadesi aggregate edilir.
+- Sipariş adresi immutable snapshot olarak saklanır.
+- Admin sipariş durum RPC'sinin SECURITY DEFINER yetki problemi düzeltildi.
+- Son veri bütünlüğü kontrollerinde orphan order item, negatif stok, bozuk sipariş toplamı, eksik snapshot ve duplicate order number bulunmadı.
 
-## Aşama 8 — Müşteri ve Gerçek Sipariş Akışı
-- Müşteri giriş / kayıt ekranı eklendi.
-- Auth kullanıcısı oluşunca customer profili otomatik oluşturulur.
-- Checkout teslimat adresini customers/addresses yapısına kaydeder.
-- create_customer_order_with_stock RPC ile sipariş, satırlar, stok düşümü ve stok hareketi tek transaction içinde çalışır.
-- RPC anon role kapalı, authenticated role açık.
-- Admin Siparişler ekranı eklendi.
-- Ödeme entegrasyonu henüz yok; payment_status=pending.
+## Aşama 21 — Otomatik doğrulama
+- `/api/health` endpoint'i eklendi.
+- GitHub Actions Node 22 üzerinde bağımlılık kurulumu, lint ve `next build` çalıştırıyor.
+- Gerçek Next production server yerel CI ortamında `npm start` ile ayağa kaldırılıyor.
+- `/`, `/products`, `/account`, `/checkout`, `/api/health` rotaları production-mode smoke testten geçiriliyor.
+- Health JSON sözleşmesi doğrulanıyor.
+- İstemci tarafında render edilen müşteri akışları için kaynak kod sözleşmeleri kontrol ediliyor.
+- Build #51: lint PASS, production build PASS, production server PASS, kritik rotalar PASS, health contract PASS, customer flow contracts PASS.
+- ESLint mevcut legacy teknik borçları warning olarak görünür tutuyor; CI'yı gereksiz yere bloke etmiyor.
 
+## Bilinen doğrulama sınırları
+- GitHub Actions içindeki smoke test gerçek Next production runtime testidir, fakat gerçek bir etkileşimli tarayıcı E2E değildir.
+- Vercel production alias deployment protection/SSO arkasında olduğundan GitHub'ın anonim curl isteği production HTTP E2E olarak kullanılamaz.
+- Güncel V3 checkout için authenticated browser UI E2E henüz yapılmadı.
+- Profil/adres ekranlarının son sürümü için authenticated browser UI E2E henüz yapılmadı.
+- Password reset uçtan uca doğrulaması Supabase varsayılan e-posta rate limit nedeniyle tamamlanmadı.
 
-## Aşama 8
-- Sipariş detay ekranı
-- Sipariş durum yönetimi
-- İptalde atomik stok iadesi
-- Çift stok iadesi koruması
+## Maliyet kuralı
+Proje zorunlu ücretli servise bağlanmayacaktır. Mevcut ücretsiz katmanlar yeterli olduğu sürece 0 TL mimari korunur; ücret gerektiren bir ihtiyaç çıkarsa önce ücretsiz alternatif seçilir.
 
-## Aşama 9 — Müşteri Hesabı
-- Hesabım dashboard eklendi.
-- Müşterinin kendi sipariş listesi ve sipariş detay ekranı eklendi.
-- Kayıtlı adres ekleme/düzenleme/silme eklendi.
-- Profil bilgileri güncelleme eklendi.
-- Tüm hesap ekranları mevcut RLS politikalarıyla kullanıcının kendi verisiyle sınırlıdır.
-
-
-## Aşama 10 — Kargo ve Takip
-- Siparişlere kargo firması, takip numarası, takip URL'si ve kargoya veriliş zamanı eklendi.
-- Admin sipariş detayında kargo bilgileri düzenlenebilir.
-- Müşteri kendi sipariş detayında kargo takip bilgilerini görebilir.
-- Takip bağlantısı varsa doğrudan kargo takip sayfasına yönlendirme yapılır.
-
-## Aşama 12 — Kampanya ve Kupon
-- campaigns ve coupons tabloları
-- kupon kullanım kayıtları
-- sepet kupon doğrulama
-- atomik checkout sırasında server-side indirim doğrulama
-- admin kampanya/kupon yönetimi
-
-
-## Aşama 13 — Banner & İçerik Yönetimi
-- Admin banner CRUD temel akışı
-- Başlangıç/bitiş tarihli banner görünürlüğü
-- Ana sayfa içerik blokları
-- Banner ve içeriklerin müşteri ana sayfasına bağlanması
-- RLS ile yalnız aktif/geçerli içeriklerin public okunması
-
-## Aşama 14 — Ürün Görsel Yönetimi ve Açıklama Editörü
-- Çoklu ürün görseli yükleme alanı geliştirildi.
-- Sürükle-bırak ile mevcut görsellerin sırası değiştirilebiliyor.
-- Ana görsel tek tıkla seçilebiliyor.
-- Ana görsel silinirse kalan ilk görsel yeni ana görsel oluyor.
-- Yeni seçilen görseller yükleme öncesi önizleniyor ve tek tek kaldırılabiliyor.
-- Dosya tipi ve 10 MB boyut sınırı istemci tarafında kontrol ediliyor.
-- Açıklama editörüne başlık, madde, numaralı liste, vurgu ve özellik şablonu araçları eklendi.
-- SEO taslağı oluşturma, SEO başlığı/meta açıklama karakter sayaçları eklendi.
-
-
-## Aşama 15 — AI ürün metni
-- Admin ürün formuna AI Açıklama + SEO Oluştur eklendi.
-- Supabase Edge Function `generate-product-copy` deploy edildi ve JWT zorunlu.
-- Zorunlu ücretli servis yok: AI anahtarı yoksa ücretsiz deterministik taslak üretir.
-- AI sağlayıcı anahtarı daha sonra eklenirse aynı endpoint gerçek model çıktısını kullanır.
-- Teknik özellik uydurmamayı hedefleyen prompt kuralı eklendi.
+## Sonraki teknik hedef
+Aşama 21 içinde otomatik doğrulama kapsamını genişletmek, proje durum/test dokümantasyonunu güncel tutmak ve tarayıcı gerektirmeden güvenilir şekilde doğrulanabilecek kritik iş kurallarını CI'a eklemek.
