@@ -1,5 +1,6 @@
 'use client';
 import { FormEvent, useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -10,7 +11,7 @@ export default function ResetPasswordPage(){
  const [ready,setReady]=useState(false);const [checking,setChecking]=useState(true);const [message,setMessage]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);
  useEffect(()=>{
   let active=true;
-  const finish=(session:any)=>{if(!active)return;setReady(Boolean(session));setChecking(false)};
+  const finish=(session:Session|null)=>{if(!active)return;setReady(Boolean(session));setChecking(false)};
   supabase.auth.getSession().then(({data,error})=>{if(!active)return;if(error){setError('Şifre yenileme bağlantısı doğrulanamadı. Lütfen yeni bir bağlantı isteyin.');setChecking(false);return}finish(data.session)});
   const {data:listener}=supabase.auth.onAuthStateChange((event,session)=>{
    if(!active)return;
