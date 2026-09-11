@@ -114,6 +114,8 @@
 - PASS: preparing -> shipped geçişinde `shipped_at` oluşuyor.
 - PASS: admin kargo güncelleme yetkisi transaction testinde doğrulandı.
 - PASS: normal müşteri kargo alanlarını güncelleyemiyor.
+- PASS: `cancelled` ve `delivered` siparişlerde `shipping_carrier`, `tracking_number`, `tracking_url` ve `shipped_at` alanları DB trigger ile değiştirilemez; rollback-only gerçek DB transaction testiyle doğrulandı.
+- PASS: repo sözleşme testi, terminal kargo kilidinin DB doğrulama kaydını ve bunun browser E2E olmadığını açıkça koruyor.
 - PENDING: gerçek admin/müşteri browser E2E kargo takip testi.
 
 ## Admin Sipariş Ekranları
