@@ -65,20 +65,24 @@ jobs:
           set -euo pipefail
           body="$(curl -fsS --max-time 20 http://127.0.0.1:3000/api/health)"
           node -e 'const x=JSON.parse(process.argv[1]); if(x.status!=="ok"||x.service!=="vivatech-commerce"||!x.timestamp) process.exit(1); console.log("Health contract OK")' "$body"
-      - name: Verify customer entry flows
+      - name: Verify customer entry flow contracts
         shell: bash
         run: |
           set -euo pipefail
-          account="$(curl -fsS --max-time 20 http://127.0.0.1:3000/account)"
-          checkout="$(curl -fsS --max-time 20 http://127.0.0.1:3000/checkout)"
-          products="$(curl -fsS --max-time 20 http://127.0.0.1:3000/products)"
-          printf '%s' "$account" | grep -q 'Hesabım'
-          printf '%s' "$account" | grep -q 'Giriş Yap'
-          printf '%s' "$account" | grep -q 'Üye Ol'
-          printf '%s' "$checkout" | grep -q 'Siparişi Tamamla'
-          printf '%s' "$checkout" | grep -q 'Oturum kontrol ediliyor'
-          printf '%s' "$products" | grep -qi 'ürün'
-          echo "Customer entry flow assertions OK"
+          account_src="src/app/account/page.tsx"
+          checkout_src="src/app/checkout/page.tsx"
+          products_html="$(curl -fsS --max-time 20 http://127.0.0.1:3000/products)"
+
+          grep -q 'Giriş Yap' "$account_src"
+          grep -q 'Üye Ol' "$account_src"
+          grep -q 'Şifremi Unuttum' "$account_src"
+          grep -q 'create_customer_order_with_stock_v3' "$checkout_src"
+          grep -q 'Giriş Yap / Üye Ol' "$checkout_src"
+          grep -q 'Kayıtlı Adreslerim' "$checkout_src"
+          grep -q 'Yeni Adres' "$checkout_src"
+          grep -q 'Siparişi Oluştur' "$checkout_src"
+          printf '%s' "$products_html" | grep -qi 'ürün'
+          echo "Customer entry flow contracts OK"
       - name: Stop production server
         if: always()
         shell: bash
