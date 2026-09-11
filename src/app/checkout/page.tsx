@@ -1,6 +1,7 @@
 'use client';
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 import { StoreHeader } from '@/components/StoreHeader';
 import { useCart } from '@/components/CartProvider';
 import { CouponBox } from '@/components/CouponBox';
@@ -9,7 +10,7 @@ const money=(v:number)=>v.toLocaleString('tr-TR',{style:'currency',currency:'TRY
 type Address={id:string;title:string|null;full_name:string;phone:string|null;city:string;district:string;address_line:string;postal_code:string|null;is_default:boolean};
 type CreatedOrder={order_id:string;order_number:string};
 export default function CheckoutPage(){
- const {items,coupon,discount,total,clearCart}=useCart(); const [user,setUser]=useState<any>(undefined); const [customerId,setCustomerId]=useState(''); const [addresses,setAddresses]=useState<Address[]>([]); const [selectedAddress,setSelectedAddress]=useState(''); const [addressMode,setAddressMode]=useState<'saved'|'new'>('new'); const [busy,setBusy]=useState(false); const [result,setResult]=useState<{order?:string,error?:string}>({});
+ const {items,coupon,discount,total,clearCart}=useCart(); const [user,setUser]=useState<User|null|undefined>(undefined); const [customerId,setCustomerId]=useState(''); const [addresses,setAddresses]=useState<Address[]>([]); const [selectedAddress,setSelectedAddress]=useState(''); const [addressMode,setAddressMode]=useState<'saved'|'new'>('new'); const [busy,setBusy]=useState(false); const [result,setResult]=useState<{order?:string,error?:string}>({});
  useEffect(()=>{(async()=>{const {data}=await supabase.auth.getUser();setUser(data.user);if(!data.user)return;const {data:customer}=await supabase.from('customers').select('id').eq('auth_user_id',data.user.id).single();if(!customer)return;setCustomerId(customer.id);const {data:list}=await supabase.from('addresses').select('id,title,full_name,phone,city,district,address_line,postal_code,is_default').eq('customer_id',customer.id).order('is_default',{ascending:false}).order('created_at',{ascending:false});const rows=(list||[]) as Address[];setAddresses(rows);if(rows.length){const preferred=rows.find(a=>a.is_default)||rows[0];setSelectedAddress(preferred.id);setAddressMode('saved')}})()},[]);
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!user||!items.length||!customerId)return;setBusy(true);setResult({});let addressId=selectedAddress;
   try{
