@@ -4,12 +4,32 @@
 - PASS: GitHub Actions Node 22 bağımlılık kurulumu.
 - PASS: `npm run lint` — 0 uyarı / 0 hata.
 - PASS: `@typescript-eslint/no-explicit-any` CI'da ERROR seviyesinde; yeni kontrolsüz `any` kullanımı build'i durdurur.
+- PASS: Node built-in test runner ile `tests/*.test.mjs` iş kuralı ve kaynak sözleşmesi testleri çalışıyor.
 - PASS: `npm run build` gerçek Next.js production build.
 - PASS: `npm start` ile production sunucusu ayağa kalkıyor.
 - PASS: `/`, `/products`, `/account`, `/checkout`, `/api/health` HTTP smoke testleri.
 - PASS: `/api/health` sözleşmesi (`status=ok`, `service=vivatech-commerce`, timestamp).
 - PASS: müşteri giriş/checkout kritik kaynak sözleşmeleri.
-- Son tam doğrulama: GitHub Actions Build #67 — SUCCESS.
+- Son doğrulanan tam CI: GitHub Actions Build #87 — SUCCESS. Lint, tüm iş-kuralı/sözleşme testleri, production build, local production runtime smoke, health ve müşteri giriş akışı kontrollerinin tamamı geçti.
+
+## CI İş Kuralı / Kaynak Sözleşmesi Kapsamı
+- PASS: Sepet miktar clamp, subtotal ve toplam adet kuralları.
+- PASS: Checkout yalnız V3 atomik sipariş RPC kullanıyor; V2 istemci çağrısı yok.
+- PASS: Checkout istemciden ürün fiyatı, satır toplamı veya sipariş toplamı göndermiyor; yalnız ürün kimliği ve adet gönderiyor.
+- PASS: Sipariş numarası istemcide üretilmiyor; V3 RPC'den dönen `order_number` kullanılıyor.
+- PASS: Müşteri sipariş iptali dedicated `cancel_customer_order` RPC üzerinden yapılıyor.
+- PASS: Adres ve profil işlemleri authenticated customer sahipliği ile sınırlandırılıyor.
+- PASS: Password recovery redirect/session/update akışının kaynak sözleşmeleri.
+- PASS: Admin sipariş durum değişikliği protected `admin_update_order_status` RPC üzerinden yapılıyor; protected status alanına doğrudan client update yok.
+- PASS: Admin kargo güncellemesi yalnız kargo alanlarını taşıyor ve takip URL'si yalnız http/https kabul ediyor.
+- PASS: Ürün formu fiyat/stok doğrulaması, ürün-id scope ve görsel dosya tipi/boyut kısıtları.
+- PASS: Kampanya/kupon admin formu normalizasyonu, sayısal alanları ve kayıt bazlı aktivasyon değişimi.
+- PASS: Kategori/marka slug normalizasyonu, CRUD id scope ve kategori direct self-parent engeli.
+- PASS: Admin alanı auth + `is_admin` RPC kontrolü ile korunuyor.
+- PASS: Public katalog yalnız aktif ürün/kategori/marka kayıtlarını kullanıyor; ürün detay sorgusu `slug + is_active=true` ile sınırlandırılıyor.
+- PASS: Stokta olmayan ürünün sepete ekleme butonu devre dışı.
+- PASS: Kupon doğrulaması server-side `validate_coupon` RPC üzerinden; checkout indirim tutarı değil yalnız kupon kodu gönderiyor.
+- Build #83 yeni kategori/marka testindeki hatalı regex assertion nedeniyle FAILED; uygulama hatası değildi. Assertion düzeltildi ve Build #84 SUCCESS oldu.
 
 ## Sepet ve Checkout
 - PASS: cartSubtotal matematik kontrolü.
@@ -86,6 +106,7 @@
 - PASS: kupon kodu case-insensitive unique.
 - PASS: public kupon wrapper çalışıyor; kritik hesaplama helper'ları private schema içinde.
 - PASS: admin kampanya/kupon sayfasındaki gevşek `any` tipleri kaldırıldı.
+- PASS: istemci kuponu `validate_coupon` RPC ile doğrular; checkout yalnız kupon kodunu V3 RPC'ye taşır, indirim tutarını authoritative veri olarak göndermez.
 - PENDING: gerçek authenticated browser checkout + kupon E2E testi.
 
 ## Kargo Takibi
