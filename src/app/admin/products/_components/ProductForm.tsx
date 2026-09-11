@@ -352,7 +352,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{if(e.target.files) addFiles(e.target.files); e.target.value='';}} />
         </label>
 
-        {pendingImages.length>0 && <><div className="section-row"><strong>Yükleme Sırası</strong><span className="muted">{pendingImages.length} yeni görsel</span></div><div className="pending-image-grid">{pendingImages.map((item,index)=><div className="pending-image" key={item.id}><img src={item.preview} alt={item.file.name} /><span>{index+1}</span><small title={item.file.name}>{item.file.name}</small><button type="button" onClick={()=>removePending(item.id)}>×</button></div>)}</div></>}
+        {pendingImages.length>0 && <><div className="section-row"><strong>Yükleme Sırası</strong><span className="muted">{pendingImages.length} yeni görsel</span></div><div className="pending-image-grid">{pendingImages.map((item,index)=><div className="pending-image" key={item.id}><Image src={item.preview} alt={item.file.name} width={160} height={160} unoptimized /><span>{index+1}</span><small title={item.file.name}>{item.file.name}</small><button type="button" onClick={()=>removePending(item.id)}>×</button></div>)}</div></>}
       </section>
 
       <section className="form-card"><div className="section-row"><div><h2>SEO</h2><p className="muted">Google sonuçlarında görünecek başlık ve açıklama.</p></div><button type="button" className="button secondary compact" onClick={generateSeoDraft}>SEO Taslağı Oluştur</button></div>
