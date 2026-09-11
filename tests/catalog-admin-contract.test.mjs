@@ -9,7 +9,7 @@ test('category slug is normalized from Turkish characters', () => {
   assert.match(categorySource, /toLocaleLowerCase\('tr-TR'\)/);
   assert.match(categorySource, /replace\(\/ı\/g,'i'\)/);
   assert.match(categorySource, /replace\(\/ğ\/g,'g'\)/);
-  assert.match(categorySource, /replace\(\/[^a-z0-9]\+\/g,'-'\)/);
+  assert.ok(categorySource.includes("replace(/[^a-z0-9]+/g,'-')"));
 });
 
 test('category create and update use the categories table and update is scoped by id', () => {
@@ -31,7 +31,7 @@ test('brand slug is normalized from Turkish characters', () => {
   assert.match(brandSource, /toLocaleLowerCase\('tr-TR'\)/);
   assert.match(brandSource, /replace\(\/ı\/g,'i'\)/);
   assert.match(brandSource, /replace\(\/ş\/g,'s'\)/);
-  assert.match(brandSource, /replace\(\/[^a-z0-9]\+\/g,'-'\)/);
+  assert.ok(brandSource.includes("replace(/[^a-z0-9]+/g,'-')"));
 });
 
 test('brand create and update use the brands table and update is scoped by id', () => {
