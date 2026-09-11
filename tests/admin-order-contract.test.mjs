@@ -18,6 +18,12 @@ test('cancellation asks for explicit confirmation before RPC', () => {
   assert.match(source, /status==='cancelled'&&!confirm\(/);
 });
 
+test('paid orders do not expose direct admin cancellation', () => {
+  assert.match(source, /status==='cancelled'&&order\?\.payment_status==='paid'/);
+  assert.match(source, /filter\(status=>!\(status==='cancelled'&&order\.payment_status==='paid'\)\)/);
+  assert.match(source, /İptal etmeden önce ödeme iadesi tamamlanmalıdır/);
+});
+
 test('terminal order states expose no further transitions', () => {
   assert.match(source, /delivered:\[\]/);
   assert.match(source, /cancelled:\[\]/);
