@@ -1,6 +1,7 @@
 'use client';
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { StoreHeader } from '@/components/StoreHeader';
 import { AccountNav } from '@/components/AccountNav';
@@ -16,7 +17,7 @@ const authMessage=(message:string)=>{
 };
 
 export default function AccountPage(){
- const [user,setUser]=useState<any>(null); const [mode,setMode]=useState<'login'|'signup'>('login'); const [message,setMessage]=useState(''); const [busy,setBusy]=useState(false); const [stats,setStats]=useState({orders:0,addresses:0});
+ const [user,setUser]=useState<User|null>(null); const [mode,setMode]=useState<'login'|'signup'>('login'); const [message,setMessage]=useState(''); const [busy,setBusy]=useState(false); const [stats,setStats]=useState({orders:0,addresses:0});
  useEffect(()=>{supabase.auth.getUser().then(async({data})=>{setUser(data.user);if(data.user) await loadStats();});},[]);
  async function loadStats(){const [{count:orders},{count:addresses}]=await Promise.all([supabase.from('orders').select('*',{count:'exact',head:true}),supabase.from('addresses').select('*',{count:'exact',head:true})]);setStats({orders:orders||0,addresses:addresses||0});}
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setMessage('');const fd=new FormData(e.currentTarget);const email=String(fd.get('email')||'').trim();const password=String(fd.get('password')||'');
