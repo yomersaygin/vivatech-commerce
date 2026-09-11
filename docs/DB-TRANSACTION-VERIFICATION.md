@@ -46,4 +46,68 @@ Rollback verification after the negative-path test:
 - Admin membership row was restored (`1` row).
 - Probe order rows remained `0`.
 
+### Duplicate same-product rows
+The current V3 checkout RPC was verified with the same product appearing in two separate cart rows.
+
+Within-stock case:
+- Two rows were submitted for the same product with quantities `2` and `3`.
+- Total ordered quantity was `5`.
+- Two order-item rows were created, preserving the submitted rows.
+- Subtotal and total were both `24995.00`.
+- Total `sale` stock-movement quantity was `5`.
+- `shipping_address_snapshot` was populated.
+
+Over-stock case:
+- Current stock was `18`.
+- Two rows were submitted with a combined quantity of `19`.
+- The RPC rejected the order with an insufficient-stock error.
+- Product stock remained `18`.
+- No probe order was created.
+
+All duplicate-row verification was rollback-only; no persistent order, order item, or stock movement was left behind.
+
+### Coupon enforcement and usage limits
+A temporary percentage coupon was created inside a rollback-only transaction and used through the current V3 checkout RPC as a normal authenticated customer.
+
+Observed on the first checkout:
+- Product subtotal: `4999.00`.
+- Coupon discount: `499.90` (`10%`).
+- Final total: `4499.10`.
+- Exactly one coupon-redemption row was created.
+- Product stock changed from `18` to `17`.
+
+The same customer then attempted to use the same coupon again while `per_customer_limit = 1`:
+- The second checkout was rejected with `Bu kuponu kullanım limitinize ulaştınız`.
+- Product stock remained `17`; there was no second stock decrement.
+- No second successful order or coupon redemption was created.
+
+Rollback verification:
+- Product stock returned to `18`.
+- Temporary test orders: `0`.
+- Temporary coupon rows: `0`.
+- Admin membership row was restored.
+
+### Customer cancellation stock restoration and idempotence
+A real V3 order was created inside a rollback-only transaction and then cancelled through `public.cancel_customer_order(uuid)` as the owning normal authenticated customer.
+
+Observed:
+- After order creation, product stock changed from `18` to `17` and order status was `new`.
+- First cancellation changed order status to `cancelled`.
+- Stock was restored from `17` to `18`.
+- Exactly one `return_in` stock movement was created with quantity `1`.
+
+The same order was then cancelled a second time:
+- Order status remained `cancelled`.
+- Product stock remained `18`.
+- `return_in` movement count remained `1`.
+- Returned quantity remained `1`.
+
+This confirms cancellation is idempotent for stock restoration and does not double-return inventory.
+
+Rollback verification:
+- Product stock was `18`.
+- Test order rows: `0`.
+- Test stock-movement rows: `0`.
+- Admin membership row was restored.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
