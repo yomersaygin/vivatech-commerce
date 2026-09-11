@@ -110,4 +110,50 @@ Rollback verification:
 - Test stock-movement rows: `0`.
 - Admin membership row was restored.
 
+## 2026-09-12 — Payment lifecycle and cancellation safety
+
+Payment-state handling was verified against the live database in rollback-only transactions using the owning authenticated customer.
+
+### Paid order protection
+Before hardening, a `paid` order could be cancelled by the customer, which could produce an inconsistent state: `status = cancelled` while `payment_status = paid` and stock was restored before any payment refund was recorded.
+
+The customer cancellation RPC was hardened so a paid order cannot be directly cancelled. The required lifecycle is now: refund/payment reversal first, then cancellation.
+
+Real DB verification after the hardening:
+- A V3 order was created and its payment state was set to `paid` inside the test transaction.
+- Customer cancellation was rejected with `Ödemesi tamamlanmış sipariş doğrudan iptal edilemez; önce iade işlemi tamamlanmalıdır`.
+- Order status remained `new`.
+- Payment status remained `paid`.
+- Stock remained `17`; no incorrect inventory return occurred.
+
+### Failed payment cancellation
+A V3 order with `payment_status = failed` was cancelled through the customer cancellation RPC.
+
+Observed:
+- Order status became `cancelled`.
+- Payment status remained `failed`.
+- Stock was restored from `17` to `18`.
+- Exactly one `return_in` stock movement was created.
+
+### Refunded payment cancellation and idempotence
+A V3 order with `payment_status = refunded` was cancelled through the same customer RPC.
+
+Observed:
+- Order status became `cancelled`.
+- Payment status remained `refunded`.
+- Stock was restored to `18`.
+- A repeated cancellation did not restore stock a second time.
+- `return_in` movement count remained `1`, with returned quantity `1`.
+
+Rollback verification after these payment-lifecycle tests:
+- Product stock was `18`.
+- Probe/test orders were `0`.
+- Temporary admin membership changes were fully restored.
+
+The verified lifecycle is therefore:
+- `pending`: normal pre-payment order state.
+- `paid`: customer direct cancellation is blocked until refund/payment reversal is completed.
+- `failed`: cancellation is allowed and stock returns exactly once.
+- `refunded`: cancellation is allowed and stock returns exactly once; repeated cancellation is idempotent.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
