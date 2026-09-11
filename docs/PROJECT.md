@@ -1,7 +1,9 @@
 # Vivatech Commerce — Proje Durumu
 
-## Mevcut aşama
-Aşama 21 — Üretim doğrulama ve otomatik smoke-test altyapısı
+## Mevcut durum
+Aşama 21 — Üretim doğrulama ve otomatik smoke-test altyapısı: TAMAMLANDI.
+
+Aşama 21 sonrası kod kalitesi sertleştirmesi: TAMAMLANDI.
 
 ## Tamamlanan ana kapsam
 - Next.js + Supabase + GitHub + Vercel temeli
@@ -39,8 +41,16 @@ Aşama 21 — Üretim doğrulama ve otomatik smoke-test altyapısı
 - `/`, `/products`, `/account`, `/checkout`, `/api/health` rotaları production-mode smoke testten geçiriliyor.
 - Health JSON sözleşmesi doğrulanıyor.
 - İstemci tarafında render edilen müşteri akışları için kaynak kod sözleşmeleri kontrol ediliyor.
-- Build #51: lint PASS, production build PASS, production server PASS, kritik rotalar PASS, health contract PASS, customer flow contracts PASS.
-- ESLint mevcut legacy teknik borçları warning olarak görünür tutuyor; CI'yı gereksiz yere bloke etmiyor.
+- Build #66: lint 0 uyarı / 0 hata, production build PASS, production server PASS, kritik rotalar PASS, health contract PASS, customer flow contracts PASS.
+- Build #67: `@typescript-eslint/no-explicit-any` tekrar ERROR seviyesine çıkarılmış halde tüm CI adımları PASS.
+
+## Aşama 21 sonrası kod kalitesi sertleştirmesi
+- Müşteri ve admin sipariş ekranlarındaki gevşek `any` tipleri kaldırıldı.
+- Profil, adres, sipariş geçmişi, password recovery, kampanya/kupon ve checkout tarafında açık tipler kullanıldı.
+- CartProvider kupon sonucu açık tipe geçirildi; hook bağımlılıkları `useCallback`/`useMemo` ile düzeltildi.
+- Ürün formundaki son `<img>` lint uyarısı `next/image` ile giderildi.
+- Lint sonucu 0 uyarı / 0 hata seviyesine indirildi.
+- `@typescript-eslint/no-explicit-any` artık CI'da error; yeni kontrolsüz `any` kullanımı build'i durdurur.
 
 ## Bilinen doğrulama sınırları
 - GitHub Actions içindeki smoke test gerçek Next production runtime testidir, fakat gerçek bir etkileşimli tarayıcı E2E değildir.
@@ -53,4 +63,4 @@ Aşama 21 — Üretim doğrulama ve otomatik smoke-test altyapısı
 Proje zorunlu ücretli servise bağlanmayacaktır. Mevcut ücretsiz katmanlar yeterli olduğu sürece 0 TL mimari korunur; ücret gerektiren bir ihtiyaç çıkarsa önce ücretsiz alternatif seçilir.
 
 ## Sonraki teknik hedef
-Aşama 21 içinde otomatik doğrulama kapsamını genişletmek, proje durum/test dokümantasyonunu güncel tutmak ve tarayıcı gerektirmeden güvenilir şekilde doğrulanabilecek kritik iş kurallarını CI'a eklemek.
+Aşama 21 tamamlandı. Bir sonraki yeni aşama, mevcut yol haritasında önceden tanımlı bir numara olmadığı için ayrıca tanımlanacaktır. Öncelik; gerçek tarayıcı gerektirmeden otomatikleştirilebilen kritik iş kurallarını CI kapsamına eklemek, ardından uygun browser/session aracı bulunduğunda authenticated V3 checkout ve hesap akışlarını gerçek E2E ile doğrulamaktır.
