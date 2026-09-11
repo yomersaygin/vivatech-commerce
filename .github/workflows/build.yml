@@ -76,7 +76,7 @@ jobs:
           printf '%s' "$account" | grep -q 'Giriş Yap'
           printf '%s' "$account" | grep -q 'Üye Ol'
           printf '%s' "$checkout" | grep -q 'Siparişi Tamamla'
-          printf '%s' "$checkout" | grep -q 'Giriş Yap / Üye Ol'
+          printf '%s' "$checkout" | grep -q 'Oturum kontrol ediliyor'
           printf '%s' "$products" | grep -qi 'ürün'
           echo "Customer entry flow assertions OK"
       - name: Stop production server
