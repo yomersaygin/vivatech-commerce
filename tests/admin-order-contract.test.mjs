@@ -38,6 +38,10 @@ test('shipping updates are restricted to shipping fields', () => {
   assert.doesNotMatch(source, /const payload=\{[^}]*payment_status:/s);
 });
 
+test('terminal orders do not expose shipping edits in the admin UI', () => {
+  assert.match(source, /disabled=\{saving\|\|order\.status==='cancelled'\|\|order\.status==='delivered'\}/);
+});
+
 test('tracking URLs only allow http or https schemes', () => {
   assert.match(source, /url\.protocol==='https:'\|\|url\.protocol==='http:'/);
 });
