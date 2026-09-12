@@ -410,4 +410,26 @@ Repository persistence:
 
 This was a database transaction and privilege test. It was not a browser E2E test.
 
+## 2026-09-12 — Category hierarchy cycle prevention
+
+The live category table initially enforced only the `parent_id` foreign key. A real authenticated-admin probe created two temporary categories and successfully changed their links from A→B to A↔B, confirming that an indirect cycle was accepted before hardening. The probe deliberately raised an exception, so the entire transaction rolled back and left no categories behind.
+
+Hardening applied:
+- Added a BEFORE INSERT/UPDATE trigger that rejects direct self-parenting and recursively checks every proposed ancestor chain.
+- Serialized hierarchy writes with a transaction-scoped advisory lock so concurrent reparent operations cannot independently create a cycle from stale snapshots.
+- Kept the trigger function in the private schema and removed direct client execution privileges.
+
+Real rollback-only live database verification:
+- A normal root→child relationship was accepted.
+- Reparenting the root beneath its child was rejected as an indirect cycle.
+- Assigning a category as its own parent was rejected.
+- Reparenting the child to another root remained valid.
+- Rollback left `0` probe categories; the live hierarchy still contained `0` cycles.
+
+Repository persistence:
+- `supabase/migrations/20260912213430_prevent_category_hierarchy_cycles.sql` contains the serialized recursive trigger.
+- The repository source contract checks the trigger, recursive ancestor walk, concurrency lock and verification record.
+
+This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: kategori `parent_id` değişiklikleri DB trigger ile doğrudan ve dolaylı hiyerarşi döngülerine karşı korunuyor.
+- PASS: gerçek authenticated-admin rollback testinde normal ebeveyn ilişkisi çalıştı; A↔B ve self-parent denemeleri reddedildi, kalıcı probe kategorisi `0` kaldı.
+- PASS: kategori hiyerarşisi yazımları transaction advisory lock ile eşzamanlı reparent yarışlarına karşı serileştirildi.
 - PASS: ürün stoğu doğrudan istemci UPDATE yolundan çıkarıldı; mevcut ürün stok değişimi yalnız admin RPC ile yapılıyor.
 - PASS: stok ayarı atomik olarak `adjustment_in/out`, yeni ürün başlangıç stoğu `opening` hareketi oluşturuyor.
 - PASS: gerçek rollback testinde `+2` stok için tek hareket, aynı hedefin tekrarında sıfır ek hareket ve admin olmayan kullanıcı reddi doğrulandı.
