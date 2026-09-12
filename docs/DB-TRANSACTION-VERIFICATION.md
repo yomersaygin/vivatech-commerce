@@ -186,4 +186,23 @@ The resulting rule is:
 - Before terminal state: authorized admin shipping data can be maintained.
 - `cancelled` or `delivered`: shipping history is immutable at the database layer, not only in the UI.
 
+Repository persistence:
+- The live function and trigger are mirrored by `supabase/migrations/20260912202457_persist_terminal_order_shipping_lock.sql`.
+- The repo contract test verifies the protected statuses, all four immutable fields, trigger event and hardened function `search_path`.
+
+### Shipping edge-case matrix
+Additional rollback-only admin-context probes compared direct table updates with the protected status RPC.
+
+Confirmed behavior:
+- Shipping/tracking fields can currently be prepared during `new`, `confirmed` and `preparing` states.
+- Shipping/tracking fields can be maintained while the order is `shipped`.
+- A `cancelled` order rejected the same direct shipping update and retained its original values.
+- The protected status RPC rejected `new -> delivered` as an invalid transition.
+
+Gaps found for the next hardening step:
+- A direct admin table update accepted `new -> delivered`, bypassing the transition rule enforced by the RPC.
+- A direct admin table update could populate `shipped_at` while an order was still `new`, `confirmed` or `preparing`.
+
+Every edge-case manipulation ran inside a rollback-only probe. No order status, tracking value or timestamp from these probes was persisted.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
