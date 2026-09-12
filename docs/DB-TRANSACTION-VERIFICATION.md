@@ -225,4 +225,36 @@ Real rollback-only verification after hardening:
 Repository persistence:
 - `supabase/migrations/20260912203024_restrict_order_updates_and_shipped_at.sql` mirrors the privilege and trigger hardening.
 
+## 2026-09-12 — Order-item and stock-movement history protection
+
+Direct history manipulation was tested against the live database as the authenticated admin user. The test targeted one existing cancelled order item and its linked stock movement.
+
+Rollback-only operations attempted:
+- Update an order item's quantity and line total.
+- Delete the existing order item.
+- Insert an extra order item into the existing order.
+- Update the linked stock movement quantity.
+- Delete the linked stock movement.
+- Insert an extra sale stock movement for the existing order.
+
+Observed:
+- The `authenticated` role has no INSERT, UPDATE or DELETE table privileges on either `order_items` or `stock_movements`.
+- All six direct write attempts were rejected with `permission denied`.
+- The order-item quantity remained `1`.
+- The stock-movement quantity remained `1`.
+- Admin membership did not bypass the table privilege boundary.
+
+Trusted-RPC regression after the explicit revokes:
+- V3 checkout still created one order item and one `sale` stock movement.
+- Stock changed from `18` to `17` after order creation.
+- Customer cancellation restored stock from `17` to `18`.
+- Cancellation created exactly one `return_in` movement with `reference_type = order_cancel`.
+- The rollback left `0` probe orders and restored the temporary admin-membership change.
+
+Repository persistence:
+- `supabase/migrations/20260912203627_lock_order_items_and_stock_movements.sql` explicitly revokes all direct write-class privileges from `anon` and `authenticated` for both history tables.
+- Trusted SECURITY DEFINER order and cancellation functions retain owner-level access for legitimate atomic writes.
+
+This was a real authenticated database transaction test, not a browser E2E test. No order item or stock movement was created, changed or deleted.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

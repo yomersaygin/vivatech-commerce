@@ -87,6 +87,11 @@
 - PASS: duplicate_order_numbers = 0.
 - PASS: invalid_stock_movements = 0.
 - PASS: orders_without_items = 0.
+- PASS: authenticated admin dahil istemciler `order_items` üzerinde doğrudan INSERT/UPDATE/DELETE yapamıyor.
+- PASS: authenticated admin dahil istemciler `stock_movements` üzerinde doğrudan INSERT/UPDATE/DELETE yapamıyor.
+- PASS: altı geçmiş manipülasyonu canlı rollback-only DB testinde reddedildi; miktarlar değişmedi.
+- PASS: iki geçmiş tablosunun doğrudan yazma yasağı repo migration ve kaynak sözleşme testiyle kalıcılaştırıldı.
+- PASS: doğrudan yazma yetkileri kaldırıldıktan sonra V3 sipariş ve müşteri iptal RPC regresyonu `18→17→18`, 1 item, 1 sale ve 1 return hareketiyle geçti.
 
 ## Ürün / Stok Güvenliği
 - PASS: ürün fiyatı, karşılaştırma fiyatı ve stok için negatif değer kontrolleri.
