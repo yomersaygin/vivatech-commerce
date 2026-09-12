@@ -257,4 +257,32 @@ Repository persistence:
 
 This was a real authenticated database transaction test, not a browser E2E test. No order item or stock movement was created, changed or deleted.
 
+## 2026-09-12 — Coupon redemption and financial-history protection
+
+A temporary 10% coupon and a real V3 order were created against the live database. The authenticated admin context then attempted to rewrite the resulting coupon history.
+
+Direct-manipulation results before the additional grant hardening:
+- Redemption UPDATE affected `0` rows under RLS.
+- Redemption DELETE affected `0` rows under RLS.
+- A forged redemption INSERT was rejected by RLS.
+- Direct changes to the order's `coupon_id`, `discount_amount` and `total_amount` were rejected by the order column-privilege boundary.
+- Deleting the used coupon was rejected by the redemption foreign key.
+- Normal admin editing of the coupon catalogue row remained allowed, as intended.
+- The original order discount remained `499.90` and its coupon link remained intact.
+
+Hardening applied:
+- Direct write-class privileges on `coupon_redemptions` were revoked from both `anon` and `authenticated`.
+- `orders.coupon_id` now uses `ON DELETE RESTRICT` instead of `ON DELETE SET NULL`.
+
+Trusted V3 regression after hardening:
+- A 10% coupon produced exactly one redemption with discount `499.90`.
+- Product stock changed from `18` to `17` during checkout.
+- After deliberately removing the redemption inside the privileged rollback probe, deleting the coupon was still rejected by `orders_coupon_id_fkey`.
+- The rollback left `0` probe orders and restored stock to `18`.
+
+Repository persistence:
+- `supabase/migrations/20260912204409_protect_coupon_financial_history.sql` contains the explicit privilege revokes and restrictive order-to-coupon foreign key.
+
+All coupon probes were rollback-only real database transaction tests. They are not browser E2E evidence.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

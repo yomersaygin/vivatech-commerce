@@ -112,6 +112,11 @@
 - PASS: public kupon wrapper çalışıyor; kritik hesaplama helper'ları private schema içinde.
 - PASS: admin kampanya/kupon sayfasındaki gevşek `any` tipleri kaldırıldı.
 - PASS: istemci kuponu `validate_coupon` RPC ile doğrular; checkout yalnız kupon kodunu V3 RPC'ye taşır, indirim tutarını authoritative veri olarak göndermez.
+- PASS: coupon redemption INSERT/UPDATE/DELETE manipülasyonları gerçek authenticated admin rollback testinde engellendi.
+- PASS: sipariş kupon bağlantısı ve finansal indirim alanları istemciden doğrudan değiştirilemiyor.
+- PASS: kullanılan kupon, redemption kaydı ayrıcalıklı olarak kaldırılsa bile `orders_coupon_id_fkey ON DELETE RESTRICT` ile silinemiyor.
+- PASS: yazma yasağı ve tarihsel kupon FK davranışı repo migration ve kaynak sözleşme testiyle kalıcılaştırıldı.
+- PASS: sertleştirme sonrası kuponlu V3 checkout regresyonu 1 redemption, `499.90` indirim ve `18→17` stokla geçti.
 - PENDING: gerçek authenticated browser checkout + kupon E2E testi.
 
 ## Kargo Takibi
