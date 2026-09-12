@@ -247,17 +247,22 @@ export default function ProductForm({ productId }: { productId?: string }) {
     if (!canSave) { setMessage('Ürün adı, fiyat ve stok alanlarını kontrol edin.'); return; }
     setBusy(true); setMessage('');
     try {
+      const stockQuantity = Number(form.stock_quantity);
       const payload = {
         name: form.name.trim(), slug: (form.slug.trim() || slugify(form.name)), sku: form.sku.trim() || null, barcode: form.barcode.trim() || null,
         description: form.description.trim() || null, price: Number(form.price), compare_at_price: form.compare_at_price === '' ? null : Number(form.compare_at_price),
-        stock_quantity: Number(form.stock_quantity), category_id: form.category_id || null, brand_id: form.brand_id || null,
+        category_id: form.category_id || null, brand_id: form.brand_id || null,
         seo_title: form.seo_title.trim() || null, seo_description: form.seo_description.trim() || null, is_active: form.is_active,
       };
       let id = productId;
       if (isEdit && productId) {
         const { error } = await supabase.from('products').update(payload).eq('id', productId); if (error) throw error;
+        const { error: stockError } = await supabase.rpc('admin_adjust_product_stock', {
+          p_product_id: productId, p_new_quantity: stockQuantity, p_note: 'Admin ürün formu stok ayarı',
+        });
+        if (stockError) throw stockError;
       } else {
-        const { data, error } = await supabase.from('products').insert(payload).select('id').single(); if (error) throw error; id = data.id;
+        const { data, error } = await supabase.from('products').insert({ ...payload, stock_quantity: stockQuantity }).select('id').single(); if (error) throw error; id = data.id;
       }
       if (!id) throw new Error('Ürün kimliği oluşturulamadı.');
       await uploadImages(id, payload.name);

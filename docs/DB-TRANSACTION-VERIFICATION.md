@@ -384,4 +384,30 @@ Repository persistence:
 
 This was a database authorization and concurrency-contract test. It was not a browser E2E test.
 
+## 2026-09-12 — Audited product stock adjustments
+
+The live admin product path was tested against `products` and `stock_movements`. Before hardening, an authenticated admin could directly change `products.stock_quantity`; the stock value changed but no stock-movement row was created. The proof ran inside a rollback, so the real stock remained unchanged.
+
+Hardening applied:
+- Removed direct `stock_quantity` UPDATE from client roles while retaining admin updates for catalogue fields such as name, price, category and SEO.
+- Added `admin_adjust_product_stock(uuid,integer,text)`, which checks `is_admin()`, locks the product row, changes stock and writes one matching `adjustment_in` or `adjustment_out` movement atomically.
+- Repeated requests for the already-current quantity are idempotent and create no extra movement.
+- Added an AFTER INSERT trigger that records non-zero initial product stock as an `opening` movement.
+- Updated the admin product form so existing-product stock changes use the protected RPC; new-product initial stock is covered by the opening trigger.
+
+Real rollback-only live database verification:
+- Direct authenticated stock UPDATE was rejected after hardening.
+- An admin RPC increase of `2` changed stock by exactly `2` and created one `adjustment_in` movement with quantity `2`.
+- Repeating the same target quantity created no second movement.
+- A new product with initial stock `3` created exactly one `opening` movement with quantity `3`.
+- Normal product metadata UPDATE remained available.
+- After temporarily removing admin membership, the adjustment RPC was rejected.
+- Rollback left `0` probe movements, `0` probe products and restored the admin row.
+
+Repository persistence:
+- `supabase/migrations/20260912212731_enforce_audited_stock_adjustments.sql` contains the trigger, RPC, grants and stock-column boundary.
+- Source contracts require edit-time stock changes to use the RPC.
+
+This was a database transaction and privilege test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

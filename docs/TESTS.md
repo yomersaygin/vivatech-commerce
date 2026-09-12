@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: ürün stoğu doğrudan istemci UPDATE yolundan çıkarıldı; mevcut ürün stok değişimi yalnız admin RPC ile yapılıyor.
+- PASS: stok ayarı atomik olarak `adjustment_in/out`, yeni ürün başlangıç stoğu `opening` hareketi oluşturuyor.
+- PASS: gerçek rollback testinde `+2` stok için tek hareket, aynı hedefin tekrarında sıfır ek hareket ve admin olmayan kullanıcı reddi doğrulandı.
 - PASS: ilk-admin signup bootstrap işlemi kalıcı private kilitle yalnız bir kez çalışabilir; son admin silinirse kendiliğinden yeniden açılmaz.
 - PASS: normal kullanıcı `admin_users` üzerinde INSERT/UPDATE/DELETE yapamıyor ve private bootstrap durumuna erişemiyor.
 - PASS: gerçek rollback testinde ilk atomik bootstrap claim `1`, ikinci claim `0`; mevcut admin ve tüketilmiş kilit korundu.

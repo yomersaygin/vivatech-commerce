@@ -14,15 +14,19 @@ test('product save guard blocks invalid name, price and stock', () => {
 test('product payload derives numeric price and stock from form state', () => {
   assert.match(source, /price:\s*Number\(form\.price\)/);
   assert.match(source, /compare_at_price:\s*form\.compare_at_price\s*===\s*''\s*\?\s*null\s*:\s*Number\(form\.compare_at_price\)/);
-  assert.match(source, /stock_quantity:\s*Number\(form\.stock_quantity\)/);
+  assert.match(source, /const stockQuantity = Number\(form\.stock_quantity\)/);
 });
 
 test('product edits are scoped to the current product id', () => {
   assert.match(source, /from\('products'\)\.update\(payload\)\.eq\('id',\s*productId\)/);
+  assert.match(source, /rpc\('admin_adjust_product_stock'/);
+  assert.match(source, /p_product_id:\s*productId/);
+  assert.match(source, /p_new_quantity:\s*stockQuantity/);
+  assert.match(source, /compare_at_price:[^\n]+\n\s*category_id:/);
 });
 
 test('new products obtain their id from the database before image upload', () => {
-  assert.match(source, /from\('products'\)\.insert\(payload\)\.select\('id'\)\.single\(\)/);
+  assert.match(source, /from\('products'\)\.insert\(\{ \.\.\.payload, stock_quantity: stockQuantity \}\)\.select\('id'\)\.single\(\)/);
   assert.match(source, /await\s+uploadImages\(id,\s*payload\.name\)/);
 });
 
