@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: `admin_users` için tüm istemci yazma sınıfları açıkça kaldırıldı; normal kullanıcı kendini admin yapamıyor.
+- PASS: gerçek rollback-only testte admin üyeliği kaldırılınca `is_admin=false` oldu ve INSERT/UPDATE/DELETE/TRUNCATE reddedildi.
+- PASS: rollback admin üyeliğini geri getirdi; authenticated self-SELECT ve `is_admin()` çalışma yolu korundu.
 - PASS: `customers.email` doğrudan UPDATE yetkisi kapatıldı; kimlik e-postası Auth yaşam döngüsünde tutuluyor.
 - PASS: gerçek rollback-only müşteri testinde e-posta/sahiplik değişiklikleri reddedildi, normal profil ve adres düzenlemeleri çalıştı.
 - PASS: siparişte kullanılan adres müşteri tarafından silinemedi ve test sonrası kalıcı probe verisi `0` kaldı.

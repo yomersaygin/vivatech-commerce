@@ -338,4 +338,26 @@ Repository persistence:
 
 This was a rollback-only authenticated database test. It was not a browser E2E test.
 
+## 2026-09-12 — Admin membership privilege boundary
+
+The live `admin_users` table had RLS enabled and only a self-SELECT policy. No client INSERT, UPDATE or DELETE policy existed, so direct privilege escalation was already rejected by RLS. However, `anon` and `authenticated` still held unnecessary table-level write-class grants.
+
+Defense-in-depth hardening:
+- Revoked INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES and TRIGGER from `anon` and `authenticated` on `admin_users`.
+- Retained authenticated SELECT so `is_admin()` and the admin gate continue to work.
+- The first-admin bootstrap trigger remains non-callable by `anon` and `authenticated` and only runs from the Auth user creation trigger path when no admin exists.
+
+Real rollback-only verification:
+- The existing admin identity returned `is_admin() = true` before the probe membership was temporarily removed.
+- With membership removed inside the transaction, the same authenticated identity returned `is_admin() = false`.
+- Direct INSERT, UPDATE, DELETE and TRUNCATE attempts were all rejected by the table privilege boundary.
+- Authenticated self-SELECT and execution of `is_admin()` remained available.
+- Rollback restored the admin membership; the live admin count remained `1`.
+
+Repository persistence:
+- `supabase/migrations/20260912211004_lock_admin_membership_writes.sql` records the explicit write-class revokes.
+- The repository contract protects both the write denial and the retained read path.
+
+This was a rollback-only authenticated database test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
