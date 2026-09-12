@@ -454,4 +454,26 @@ Repository persistence:
 
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-12 — Single primary product image
+
+The admin product form normally clears the former primary image before selecting another one, but the live table had no database rule limiting a product to one primary image. A real authenticated-admin rollback probe inserted two primary image rows for one temporary product, and both were accepted before hardening.
+
+Hardening applied:
+- Added a partial unique index on product_images(product_id) for rows where is_primary is true.
+- Secondary images remain unlimited; only the single-primary invariant is enforced.
+- The rule is atomic under concurrent writes because uniqueness is enforced by PostgreSQL rather than only by UI sequencing.
+
+Real rollback-only live database verification:
+- The first primary image was accepted.
+- A second primary image for the same product was rejected with a unique violation.
+- A secondary image for the same product remained valid.
+- After demoting the first primary, promoting the secondary image succeeded.
+- Rollback left 0 probe products and 0 probe image rows; the live multiple-primary count remained 0.
+
+Repository persistence:
+- supabase/migrations/20260912214840_enforce_single_primary_product_image.sql contains the partial unique index.
+- The repository contract verifies the unique product key and primary-only predicate.
+
+This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

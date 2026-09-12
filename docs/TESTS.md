@@ -10,7 +10,7 @@
 - PASS: `/`, `/products`, `/account`, `/checkout`, `/api/health` HTTP smoke testleri.
 - PASS: `/api/health` sözleşmesi (`status=ok`, `service=vivatech-commerce`, timestamp).
 - PASS: müşteri giriş/checkout kritik kaynak sözleşmeleri.
-- Son doğrulanan tam CI: GitHub Actions Build #87 — SUCCESS. Lint, tüm iş-kuralı/sözleşme testleri, production build, local production runtime smoke, health ve müşteri giriş akışı kontrollerinin tamamı geçti.
+- Her bütünlük commitinde GitHub Actions sonucu gerçek commit SHA'sı üzerinden kontrol edilir; yalnız completed/success sonucu PASS kabul edilir.
 
 ## CI İş Kuralı / Kaynak Sözleşmesi Kapsamı
 - PASS: Sepet miktar clamp, subtotal ve toplam adet kuralları.
@@ -94,6 +94,8 @@
 - PASS: doğrudan yazma yetkileri kaldırıldıktan sonra V3 sipariş ve müşteri iptal RPC regresyonu `18→17→18`, 1 item, 1 sale ve 1 return hareketiyle geçti.
 
 ## Ürün / Stok Güvenliği
+- PASS: her ürün için en fazla bir ana görsel DB partial unique index ile garanti ediliyor.
+- PASS: gerçek authenticated-admin rollback testinde ikinci ana görsel reddedildi; ikincil görsel ve kontrollü ana görsel değişimi çalıştı.
 - PASS: ürün fiyatı, karşılaştırma fiyatı ve stok için negatif değer kontrolleri.
 - PASS: SKU/slug/barcode uniqueness kontrolleri.
 - PASS: normal authenticated kullanıcı doğrudan ürün yazamaz; admin işlemleri RLS ile korunur.
