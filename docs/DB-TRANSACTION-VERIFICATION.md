@@ -360,4 +360,28 @@ Repository persistence:
 
 This was a rollback-only authenticated database test. It was not a browser E2E test.
 
+## 2026-09-12 — Single-use first-admin bootstrap
+
+The live authorization surface confirmed that `anon` and `authenticated` have no INSERT, UPDATE or DELETE privilege on `admin_users`. A lifecycle gap nevertheless remained in the original signup trigger: it promoted a signup whenever `admin_users` was empty. Because the sole admin row cascades when its Auth user is deleted, a later arbitrary signup could have become admin.
+
+Hardening applied:
+- Added `private.admin_bootstrap_state`, a one-row persistent single-use latch outside the exposed API schema.
+- Initialized the latch as consumed because the live project already has one valid admin.
+- Replaced the bootstrap trigger function so it atomically claims the latch only when `consumed = false`.
+- The consumed state survives deletion of an admin Auth user and cannot reopen automatically.
+- Enabled RLS, added an explicit restrictive deny policy and revoked all client-role access to the private latch.
+- Reasserted that the trigger function is not executable by `public`, `anon` or `authenticated`.
+
+Real rollback-only authenticated database verification:
+- A normal-user context could not INSERT, UPDATE or DELETE `admin_users` rows.
+- The private latch was inaccessible to `authenticated`.
+- In a privileged rollback probe, the first atomic latch claim affected exactly `1` row and the second affected `0` rows.
+- After rollback, the project retained `1` admin, `bootstrap_consumed = true` and the signup trigger remained installed.
+
+Repository persistence:
+- `supabase/migrations/20260912211520_make_admin_bootstrap_single_use.sql` contains the private latch and hardened trigger function.
+- The source contract rejects the former repeatable `if not exists(admin_users)` decision rule.
+
+This was a database authorization and concurrency-contract test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

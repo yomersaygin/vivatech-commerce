@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: ilk-admin signup bootstrap işlemi kalıcı private kilitle yalnız bir kez çalışabilir; son admin silinirse kendiliğinden yeniden açılmaz.
+- PASS: normal kullanıcı `admin_users` üzerinde INSERT/UPDATE/DELETE yapamıyor ve private bootstrap durumuna erişemiyor.
+- PASS: gerçek rollback testinde ilk atomik bootstrap claim `1`, ikinci claim `0`; mevcut admin ve tüketilmiş kilit korundu.
 - PASS: `admin_users` için tüm istemci yazma sınıfları açıkça kaldırıldı; normal kullanıcı kendini admin yapamıyor.
 - PASS: gerçek rollback-only testte admin üyeliği kaldırılınca `is_admin=false` oldu ve INSERT/UPDATE/DELETE/TRUNCATE reddedildi.
 - PASS: rollback admin üyeliğini geri getirdi; authenticated self-SELECT ve `is_admin()` çalışma yolu korundu.
