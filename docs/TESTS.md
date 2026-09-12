@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: eski üç checkout RPC'sinin `public` / `anon` / `authenticated` çağrı yetkileri kapatıldı; müşteri checkout için yalnız V3 açık.
+- PASS: yetki daraltması sonrası gerçek rollback-only V3 regresyonunda sipariş `pending`, tek kalem, tek satış hareketi ve stokta `-1` doğrulandı.
+- PASS: uygulama kaynak sözleşmesi yalnız `create_customer_order_with_stock_v3` çağrısını kabul ediyor.
 - PASS: kritik private helper'larda anon/authenticated doğrudan EXECUTE yok.
 - PASS: V3 checkout ve müşteri iptal RPC'leri authenticated için kontrollü açık.
 - PASS: admin order status RPC yalnız admin kontrolüyle çalışıyor.

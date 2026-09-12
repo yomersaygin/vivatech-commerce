@@ -285,4 +285,30 @@ Repository persistence:
 
 All coupon probes were rollback-only real database transaction tests. They are not browser E2E evidence.
 
+## 2026-09-12 — Legacy checkout entry-point retirement
+
+The live function privilege surface showed that the current application checkout correctly used only `create_customer_order_with_stock_v3`, but two older checkout functions were still executable by `authenticated` and the oldest function was also executable by `anon`.
+
+Hardening applied:
+- Revoked all execution privileges from `public`, `anon` and `authenticated` on `create_order_with_stock(text,uuid,uuid,uuid,integer)`.
+- Revoked the same privileges on `create_customer_order_with_stock(text,uuid,jsonb,text)`.
+- Reasserted the existing closed state for `create_customer_order_with_stock_v2(text,uuid,jsonb,text,text)`.
+- Kept `create_customer_order_with_stock_v3(uuid,jsonb,text,text)` executable by `authenticated` as the sole customer checkout entry point.
+
+Real rollback-only authenticated V3 regression after hardening:
+- V3 returned a real order identifier and created the order with `payment_status = pending`.
+- Exactly one order item and one `sale` stock movement were created.
+- Product stock decreased by exactly one unit.
+- The transaction rollback restored the temporary admin-membership change and left `0` probe orders.
+
+Post-hardening privilege verification:
+- All three legacy functions report `anon/authenticated EXECUTE = false` for their former client roles.
+- V3 reports `authenticated EXECUTE = true`.
+
+Repository persistence:
+- `supabase/migrations/20260912205151_retire_legacy_checkout_rpcs.sql` records the explicit legacy RPC revokes.
+- The source contract verifies that the application calls only V3.
+
+This is a real database privilege check and rollback-only RPC transaction test. It is not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
