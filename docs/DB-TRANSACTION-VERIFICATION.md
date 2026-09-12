@@ -311,4 +311,31 @@ Repository persistence:
 
 This is a real database privilege check and rollback-only RPC transaction test. It is not a browser E2E test.
 
+## 2026-09-12 — Customer identity and address ownership
+
+Customer/profile and address ownership were verified directly against the live database as the owning authenticated customer. Admin membership was temporarily removed inside the transaction so the probe exercised the normal customer path.
+
+Pre-hardening finding:
+- The profile UI treated email as read-only, but `authenticated` still had direct UPDATE privilege on `customers.email`.
+- A real direct update changed the customer-table email inside the probe transaction, demonstrating that the Auth identity email and customer record could diverge.
+- The rollback left the real customer email unchanged, and the live drift count remained `0`.
+
+Hardening applied:
+- Revoked direct UPDATE on `customers.email` from `anon` and `authenticated`.
+- Email identity changes must now use the Supabase Auth lifecycle instead of rewriting the customer profile mirror.
+
+Real post-hardening verification:
+- Direct changes to `customers.email` and `customers.auth_user_id` were rejected.
+- Direct reassignment of `addresses.customer_id` was rejected.
+- A referenced shipping address could not be deleted.
+- Normal customer edits to `customers.first_name` and `addresses.title` still succeeded inside the transaction.
+- RLS retained both ownership `USING` and `WITH CHECK` predicates for customer and address updates.
+- The rollback restored temporary admin membership and left `0` profile/address probe values.
+
+Repository persistence:
+- `supabase/migrations/20260912210409_protect_customer_email_identity.sql` records the email-column privilege boundary.
+- The source contract verifies that the profile UI keeps email read-only and excludes email/ownership fields from its update payload.
+
+This was a rollback-only authenticated database test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

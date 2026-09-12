@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: `customers.email` doğrudan UPDATE yetkisi kapatıldı; kimlik e-postası Auth yaşam döngüsünde tutuluyor.
+- PASS: gerçek rollback-only müşteri testinde e-posta/sahiplik değişiklikleri reddedildi, normal profil ve adres düzenlemeleri çalıştı.
+- PASS: siparişte kullanılan adres müşteri tarafından silinemedi ve test sonrası kalıcı probe verisi `0` kaldı.
 - PASS: eski üç checkout RPC'sinin `public` / `anon` / `authenticated` çağrı yetkileri kapatıldı; müşteri checkout için yalnız V3 açık.
 - PASS: yetki daraltması sonrası gerçek rollback-only V3 regresyonunda sipariş `pending`, tek kalem, tek satış hareketi ve stokta `-1` doğrulandı.
 - PASS: uygulama kaynak sözleşmesi yalnız `create_customer_order_with_stock_v3` çağrısını kabul ediyor.
