@@ -149,6 +149,9 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: kullanılan kategori ve marka silinince ürün sınıflandırmasının sessizce NULL olması ON DELETE RESTRICT ile engellendi.
+- PASS: alt kategorisi bulunan üst kategori silinemez; hiyerarşi sessizce düzleştirilemez.
+- PASS: gerçek authenticated-admin rollback testinde üç bağlı silme reddedildi; açıkça yeniden atama sonrası kullanılmayan kayıtların silinmesi çalıştı.
 - PASS: kategori `parent_id` değişiklikleri DB trigger ile doğrudan ve dolaylı hiyerarşi döngülerine karşı korunuyor.
 - PASS: gerçek authenticated-admin rollback testinde normal ebeveyn ilişkisi çalıştı; A↔B ve self-parent denemeleri reddedildi, kalıcı probe kategorisi `0` kaldı.
 - PASS: kategori hiyerarşisi yazımları transaction advisory lock ile eşzamanlı reparent yarışlarına karşı serileştirildi.

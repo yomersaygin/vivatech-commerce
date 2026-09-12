@@ -432,4 +432,26 @@ Repository persistence:
 
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-12 — Catalog classification reference protection
+
+The live product foreign keys initially used ON DELETE SET NULL for category and brand references. A real authenticated-admin rollback probe deleted the category and brand used by the existing product; both product references became null without rejecting the deletes. The forced rollback restored the category, brand and product links.
+
+Hardening applied:
+- Changed product-to-category and product-to-brand deletion behavior to ON DELETE RESTRICT.
+- Changed child-category-to-parent-category deletion behavior to ON DELETE RESTRICT, preventing a used parent deletion from silently promoting its children to roots.
+- Unused leaf categories and unused brands remain deletable; administrators can explicitly reassign dependants before deletion.
+
+Real rollback-only live database verification:
+- Deleting a category referenced by a product was rejected.
+- Deleting a brand referenced by a product was rejected.
+- Deleting a parent category referenced by a child category was rejected.
+- After explicit reassignment, the now-unused category, brand and parent category could be deleted inside the probe.
+- Rollback restored all temporary rows and left 0 probe records; the live product retained its original category and brand.
+
+Repository persistence:
+- supabase/migrations/20260912213949_protect_catalog_classification_references.sql records all three restrictive foreign keys.
+- The repository contract rejects SET NULL behavior and verifies the documented transaction evidence.
+
+This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
