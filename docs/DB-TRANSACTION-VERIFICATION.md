@@ -199,10 +199,30 @@ Confirmed behavior:
 - A `cancelled` order rejected the same direct shipping update and retained its original values.
 - The protected status RPC rejected `new -> delivered` as an invalid transition.
 
-Gaps found for the next hardening step:
+Gaps found by the probe before hardening:
 - A direct admin table update accepted `new -> delivered`, bypassing the transition rule enforced by the RPC.
 - A direct admin table update could populate `shipped_at` while an order was still `new`, `confirmed` or `preparing`.
 
 Every edge-case manipulation ran inside a rollback-only probe. No order status, tracking value or timestamp from these probes was persisted.
+
+### Direct-update and shipped-at hardening
+The admin update privilege was narrowed from table-wide `orders` UPDATE to the four shipping columns used by the admin shipping form. Status and financial fields must now be changed through trusted database functions rather than direct Data API updates.
+
+A separate trigger now enforces `shipped_at` lifecycle integrity:
+- It cannot be populated while an order is `new`, `confirmed` or `preparing`.
+- The controlled `preparing -> shipped` RPC transition can populate it.
+- Once populated, it cannot be replaced or cleared.
+
+Real rollback-only verification after hardening:
+- Direct admin `new -> delivered` table UPDATE was rejected with `permission denied for table orders`.
+- A coordinated direct change of `subtotal` and `total_amount` was rejected by the same column-privilege boundary.
+- Direct early `shipped_at` creation was rejected by the database trigger.
+- Pre-shipment carrier/tracking preparation without changing `shipped_at` remained allowed.
+- The controlled RPC populated `shipped_at` on entry to `shipped`.
+- Tracking data remained maintainable in `shipped` while the original `shipped_at` was preserved.
+- After the probe, the source order remained `new` with `shipped_at = null`.
+
+Repository persistence:
+- `supabase/migrations/20260912203024_restrict_order_updates_and_shipped_at.sql` mirrors the privilege and trigger hardening.
 
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.

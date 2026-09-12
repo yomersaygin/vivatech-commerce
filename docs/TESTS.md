@@ -118,8 +118,9 @@
 - PASS: repo sözleşme testi, terminal kargo kilidinin DB doğrulama kaydını ve bunun browser E2E olmadığını açıkça koruyor.
 - PASS: terminal kargo trigger'ının canlı DB sözleşmesi repo migration dosyasında kalıcı olarak tutuluyor.
 - PASS: terminal `cancelled` siparişte doğrudan kargo alanı değişikliği ek rollback-only DB testinde tekrar reddedildi.
-- PENDING: admin doğrudan UPDATE ile `new -> delivered` geçişini RPC dışında yapabiliyor; DB seviyesinde kapatılmalı.
-- PENDING: `shipped_at`, sipariş kargolanmadan önce admin doğrudan UPDATE ile yazılabiliyor; DB seviyesinde kapatılmalı.
+- PASS: admin doğrudan UPDATE ile status veya finansal sipariş alanlarını değiştiremiyor; bu değişiklikler trusted RPC sınırında.
+- PASS: `shipped_at` kargolama öncesinde yazılamıyor ve oluştuktan sonra değiştirilemiyor.
+- PASS: pre-shipment takip bilgisi hazırlama ile `shipped` aşamasındaki takip güncellemesi korunuyor.
 - PENDING: gerçek admin/müşteri browser E2E kargo takip testi.
 
 ## Admin Sipariş Ekranları
