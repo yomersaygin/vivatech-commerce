@@ -432,6 +432,27 @@ Repository persistence:
 
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-13 — Catalog taxonomy identity text integrity
+
+The category and brand admin forms trim names and generate canonical slugs, but their live tables initially accepted whitespace-only names through direct authenticated-admin writes. Separate rollback probes inserted one blank category and one blank brand, proving that the form-only validation could be bypassed.
+
+Hardening applied:
+- Category and brand names must be trimmed and nonblank.
+- Category and brand slugs must be trimmed lowercase ASCII segments separated by single hyphens.
+- Existing live category and brand records had `0` invalid names and `0` invalid slugs, so no cleanup was required.
+
+Real authenticated-admin rollback probes:
+- Whitespace-only category and brand names were rejected with SQLSTATE `23514` by their table-specific name constraints.
+- A category slug with surrounding whitespace/uppercase characters and a brand slug containing uppercase/space characters were rejected with SQLSTATE `23514`.
+- Canonical `valid-category-probe-20260913` and `valid-brand-probe-20260913` rows were accepted and deliberately rolled back.
+- Persistent category probes, brand probes and live taxonomy violations all remained `0`.
+
+Repository persistence:
+- `supabase/migrations/20260913203300_enforce_catalog_taxonomy_identity_text.sql` contains all four CHECK constraints.
+- A separate repository source contract test verifies the migration and this live rollback evidence.
+
+This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 ## 2026-09-13 — Product identity text integrity
 
 The admin product form trims product names and derives a canonical slug, but the live `products` table initially treated `NOT NULL` as sufficient. A real authenticated-admin rollback probe inserted a product whose name contained only spaces, proving that direct API writes could persist an unusable catalogue identity while bypassing the form validation.

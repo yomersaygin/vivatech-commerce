@@ -155,6 +155,8 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: kategori ve marka adları DB seviyesinde kırpılmış ve boş olmayan metin olmak zorunda; slug alanları kanonik küçük harf/rakam/tire biçimiyle sınırlı.
+- PASS: gerçek authenticated-admin rollback testlerinde boş adlar ve biçimsiz slug değerleri reddedildi; geçerli kayıtlar geri alındı ve kalıcı taxonomy probe sayısı `0` kaldı.
 - PASS: site banner zaman aralığında iki tarih de doluysa `starts_at <= ends_at` DB seviyesinde zorunlu; açık uçlu zamanlama korunuyor.
 - PASS: gerçek authenticated-admin rollback testinde ters banner tarih aralığı reddedildi, geçerli ve açık uçlu aralıklar kabul edildi; kalıcı probe satırı `0` kaldı.
 - PASS: banner ve içerik buton bağlantıları yalnız güvenli iç yol, anchor veya HTTP(S) hedeflerini kabul ediyor.
