@@ -94,6 +94,8 @@
 - PASS: doğrudan yazma yetkileri kaldırıldıktan sonra V3 sipariş ve müşteri iptal RPC regresyonu `18→17→18`, 1 item, 1 sale ve 1 return hareketiyle geçti.
 
 ## Ürün / Stok Güvenliği
+- PASS: `compare_at_price` boş değilse satış fiyatından kesinlikle yüksek olmak zorunda; DB CHECK ve admin form doğrulaması aynı kuralı uyguluyor.
+- PASS: gerçek authenticated-admin rollback testinde düşük/eşit çizili fiyat reddedildi, yüksek/null değerler kabul edildi ve kalıcı probe satırı `0` kaldı.
 - PASS: her ürün için en fazla bir ana görsel DB partial unique index ile garanti ediliyor.
 - PASS: gerçek authenticated-admin rollback testinde ikinci ana görsel reddedildi; ikincil görsel ve kontrollü ana görsel değişimi çalıştı.
 - PASS: ürün fiyatı, karşılaştırma fiyatı ve stok için negatif değer kontrolleri.

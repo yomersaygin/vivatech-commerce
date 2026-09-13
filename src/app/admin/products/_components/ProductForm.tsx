@@ -66,7 +66,12 @@ export default function ProductForm({ productId }: { productId?: string }) {
   });
 
   const title = isEdit ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle';
-  const canSave = useMemo(() => form.name.trim().length >= 2 && Number(form.price) >= 0 && Number(form.stock_quantity) >= 0, [form]);
+  const canSave = useMemo(() => {
+    const price = Number(form.price);
+    const compareAtPrice = Number(form.compare_at_price);
+    const comparePriceValid = form.compare_at_price === '' || (Number.isFinite(compareAtPrice) && compareAtPrice > price);
+    return form.name.trim().length >= 2 && price >= 0 && Number(form.stock_quantity) >= 0 && comparePriceValid;
+  }, [form]);
   const descriptionChars = form.description.length;
   const seoTitleChars = form.seo_title.length;
   const seoDescriptionChars = form.seo_description.length;
@@ -244,7 +249,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!canSave) { setMessage('Ürün adı, fiyat ve stok alanlarını kontrol edin.'); return; }
+    if (!canSave) { setMessage('Ürün adı, fiyat ve stok alanlarını kontrol edin. İndirim öncesi fiyat girildiyse satış fiyatından yüksek olmalıdır.'); return; }
     setBusy(true); setMessage('');
     try {
       const stockQuantity = Number(form.stock_quantity);

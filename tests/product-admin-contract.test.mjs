@@ -6,9 +6,18 @@ const source = await readFile(new URL('../src/app/admin/products/_components/Pro
 
 test('product save guard blocks invalid name, price and stock', () => {
   assert.match(source, /form\.name\.trim\(\)\.length\s*>=\s*2/);
-  assert.match(source, /Number\(form\.price\)\s*>=\s*0/);
+  assert.match(source, /const price\s*=\s*Number\(form\.price\)/);
+  assert.match(source, /price\s*>=\s*0/);
   assert.match(source, /Number\(form\.stock_quantity\)\s*>=\s*0/);
   assert.match(source, /if\s*\(!canSave\)/);
+});
+
+test('compare-at price must be empty or greater than the sale price', () => {
+  assert.match(source, /form\.compare_at_price === ''/);
+  assert.match(source, /Number\.isFinite\(compareAtPrice\)/);
+  assert.match(source, /compareAtPrice > price/);
+  assert.match(source, /comparePriceValid/);
+  assert.match(source, /İndirim öncesi fiyat girildiyse satış fiyatından yüksek olmalıdır/);
 });
 
 test('product payload derives numeric price and stock from form state', () => {

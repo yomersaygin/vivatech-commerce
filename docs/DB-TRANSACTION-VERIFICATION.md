@@ -521,3 +521,27 @@ Repository persistence:
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
+
+## 2026-09-13 — Product compare-price integrity
+
+The storefront uses `compare_at_price` as the crossed-out pre-discount price. The live products table initially required only a nonnegative value, while the admin form also accepted values below or equal to the sale price. A real authenticated-admin rollback probe inserted `price = 100` with `compare_at_price = 50` and reached a forced exception, proving that the invalid price relationship was accepted before hardening.
+
+Hardening applied:
+- Replaced the existing nonnegative compare-price CHECK with a relational constraint.
+- `compare_at_price` may remain null when no discount comparison is intended.
+- When present, `compare_at_price` must be strictly greater than `price`.
+- The admin form now applies the same rule before submission and explains the requirement in its validation message.
+
+Real rollback-only live database verification:
+- `price = 100`, `compare_at_price = 50` was rejected with SQLSTATE `23514`.
+- `price = 100`, `compare_at_price = 100` was also rejected.
+- `price = 100`, `compare_at_price = 150` was accepted.
+- A null compare price remained valid.
+- Accepted probes were deliberately rolled back; the live invalid relationship count and persistent probe count remained `0`.
+
+Repository persistence:
+- `supabase/migrations/20260913200347_enforce_compare_price_above_sale_price.sql` contains the relational CHECK constraint.
+- The admin form contract verifies the matching client validation.
+- A separate repository source contract test verifies the migration and this transaction record.
+
+This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
