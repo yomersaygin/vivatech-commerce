@@ -453,6 +453,25 @@ Repository persistence:
 
 This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-13 — Public content title integrity
+
+The banner and content forms require a title, but real authenticated-admin rollback probes proved that their live tables initially accepted whitespace-only titles through direct writes.
+
+Hardening applied:
+- `site_banners.title` and `content_blocks.title` must be trimmed and nonblank.
+- Existing invalid banner and content-title counts were both `0`, so no cleanup was required.
+
+Real authenticated-admin rollback probes:
+- Whitespace-only banner and content titles were rejected with SQLSTATE `23514` by their table-specific constraints.
+- Normal banner and content records were accepted and deliberately rolled back.
+- No probe record persisted and live invalid counts remained `0`.
+
+Repository persistence:
+- `supabase/migrations/20260913204300_enforce_public_content_titles.sql` contains both CHECK constraints.
+- A separate repository source contract test verifies the migration and this live rollback evidence.
+
+This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 ## 2026-09-13 — Promotion identity text integrity
 
 The promotion UI normalizes campaign identity and coupon codes, but real authenticated-admin rollback probes proved that the live database initially accepted a whitespace-only campaign title and a whitespace-only coupon code.
