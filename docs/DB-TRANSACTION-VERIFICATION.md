@@ -432,6 +432,27 @@ Repository persistence:
 
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-13 — Product identity text integrity
+
+The admin product form trims product names and derives a canonical slug, but the live `products` table initially treated `NOT NULL` as sufficient. A real authenticated-admin rollback probe inserted a product whose name contained only spaces, proving that direct API writes could persist an unusable catalogue identity while bypassing the form validation.
+
+Hardening applied:
+- Added `products_name_nonblank_check`; product names must be trimmed and contain at least one character.
+- Added `products_slug_format_check`; slugs must be trimmed lowercase ASCII segments separated by single hyphens.
+- Existing live data required no cleanup: blank-name and malformed-slug counts were both `0` before the constraints were added.
+
+Real authenticated-admin rollback verification:
+- A whitespace-only product name was rejected with SQLSTATE `23514` by `products_name_nonblank_check`.
+- A slug with surrounding spaces and uppercase characters was rejected with SQLSTATE `23514` by `products_slug_format_check`.
+- `valid-product-identity-probe-20260913` with a normal product name was accepted and deliberately rolled back.
+- Persistent probe rows, blank live names and invalid live slugs all remained `0` after verification.
+
+Repository persistence:
+- `supabase/migrations/20260913202800_enforce_product_identity_text.sql` contains both database CHECK constraints.
+- A separate repository source contract test verifies the migration and this live rollback record.
+
+This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 ## 2026-09-12 — Catalog classification reference protection
 
 The live product foreign keys initially used ON DELETE SET NULL for category and brand references. A real authenticated-admin rollback probe deleted the category and brand used by the existing product; both product references became null without rejecting the deletes. The forced rollback restored the category, brand and product links.
