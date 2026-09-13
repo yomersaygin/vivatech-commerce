@@ -151,6 +151,8 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: site banner zaman aralığında iki tarih de doluysa `starts_at <= ends_at` DB seviyesinde zorunlu; açık uçlu zamanlama korunuyor.
+- PASS: gerçek authenticated-admin rollback testinde ters banner tarih aralığı reddedildi, geçerli ve açık uçlu aralıklar kabul edildi; kalıcı probe satırı `0` kaldı.
 - PASS: banner ve içerik buton bağlantıları yalnız güvenli iç yol, anchor veya HTTP(S) hedeflerini kabul ediyor.
 - PASS: gerçek authenticated-admin rollback testinde javascript:, data: ve protocol-relative bağlantılar reddedildi; güvenli hedefler çalıştı.
 - PASS: kullanılan kategori ve marka silinince ürün sınıflandırmasının sessizce NULL olması ON DELETE RESTRICT ile engellendi.

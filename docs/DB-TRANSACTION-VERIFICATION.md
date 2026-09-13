@@ -498,4 +498,26 @@ Repository persistence:
 
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-13 — Site banner date-order integrity
+
+The live `site_banners` table initially accepted a banner whose `starts_at` value was later than its `ends_at` value. A real authenticated-admin rollback probe inserted such a reversed interval and reached a forced exception, proving that the invalid range was accepted before hardening. The exception rolled the entire probe back.
+
+Hardening applied:
+- Added `site_banners_date_check` at the database layer.
+- When both timestamps are present, `starts_at` must be earlier than or equal to `ends_at`.
+- Existing open-ended scheduling remains valid when either timestamp is null.
+
+Real rollback-only live database verification:
+- A reversed `2030-02-01` to `2030-01-01` interval was rejected with SQLSTATE `23514`.
+- A normal `2030-01-01` to `2030-02-01` interval was accepted.
+- An open-ended interval with a null start remained valid.
+- The successful probes were deliberately rolled back; `0` probe rows and `0` invalid live ranges remained.
+- The existing `campaigns_date_check` independently rejected the same reversed-date probe, so no duplicate campaign migration was created.
+
+Repository persistence:
+- `supabase/migrations/20260913092421_enforce_site_banner_date_order.sql` contains the date-order CHECK constraint.
+- The repository contract verifies the null-safe ordering rule and this verification record.
+
+This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
