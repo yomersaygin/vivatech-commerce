@@ -94,6 +94,8 @@
 - PASS: doğrudan yazma yetkileri kaldırıldıktan sonra V3 sipariş ve müşteri iptal RPC regresyonu `18→17→18`, 1 item, 1 sale ve 1 return hareketiyle geçti.
 
 ## Ürün / Stok Güvenliği
+- PASS: ürün görseli URL'si DB seviyesinde kırpılmış ve boş olmayan metin, görsel sırası ise sıfır veya pozitif olmak zorunda.
+- PASS: gerçek authenticated-admin rollback testinde boş görsel URL'si ve negatif sıra reddedildi; geçerli metadata geri alındı.
 - PASS: ürün adı DB seviyesinde kırpılmış ve boş olmayan metin olmak zorunda; slug yalnız kanonik küçük harf/rakam/tire biçimini kabul ediyor.
 - PASS: gerçek authenticated-admin rollback testinde boş ürün adı ve biçimsiz slug reddedildi; geçerli kimlik kabul edilip geri alındı ve kalıcı probe satırı `0` kaldı.
 - PASS: `compare_at_price` boş değilse satış fiyatından kesinlikle yüksek olmak zorunda; DB CHECK ve admin form doğrulaması aynı kuralı uyguluyor.

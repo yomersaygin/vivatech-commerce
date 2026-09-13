@@ -453,6 +453,26 @@ Repository persistence:
 
 This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-13 — Product image metadata integrity
+
+The admin upload flow always stores a generated public URL and normalizes image positions, but real authenticated-admin rollback probes proved that the live table initially accepted a whitespace-only `image_url` and a negative `sort_order` through direct writes.
+
+Hardening applied:
+- Product image URLs must be trimmed and nonblank without restricting the future choice of URL/storage provider.
+- Product image positions must be zero or positive.
+- Existing invalid URL and negative-position counts were both `0`, so no cleanup was required.
+
+Real authenticated-admin rollback probes:
+- A whitespace-only image URL and `sort_order = -1` were separately rejected with SQLSTATE `23514`.
+- A normal HTTPS image URL with a nonnegative position was accepted and deliberately rolled back.
+- No probe image persisted; live invalid counts remained `0`.
+
+Repository persistence:
+- `supabase/migrations/20260913204800_enforce_product_image_metadata.sql` contains both CHECK constraints.
+- A separate repository source contract test verifies the migration and this live rollback evidence.
+
+This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 ## 2026-09-13 — Public content title integrity
 
 The banner and content forms require a title, but real authenticated-admin rollback probes proved that their live tables initially accepted whitespace-only titles through direct writes.
