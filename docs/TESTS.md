@@ -109,6 +109,8 @@
 - PASS: ürün formundaki görsel önizleme Next Image bileşenine geçirildi; ilgili lint uyarısı kaldırıldı.
 
 ## Kupon ve Kampanya
+- PASS: kampanya başlığı/slug ve kupon kodu DB seviyesinde boş olmayan kanonik metin biçimleriyle korunuyor.
+- PASS: gerçek authenticated-admin rollback testinde boş/biçimsiz promotion kimlikleri reddedildi; geçerli kayıtlar geri alındı.
 - PASS: yüzde kupon hesabı.
 - PASS: minimum sepet kontrolü.
 - PASS: kullanım limiti / müşteri başı limit server-side uygulanıyor.

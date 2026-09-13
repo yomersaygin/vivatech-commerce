@@ -453,6 +453,26 @@ Repository persistence:
 
 This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-13 — Promotion identity text integrity
+
+The promotion UI normalizes campaign identity and coupon codes, but real authenticated-admin rollback probes proved that the live database initially accepted a whitespace-only campaign title and a whitespace-only coupon code.
+
+Hardening applied:
+- Campaign titles must be trimmed and nonblank; campaign slugs use canonical lowercase hyphenated segments.
+- Coupon codes must be trimmed, nonblank uppercase tokens containing letters/numbers with optional single underscore or hyphen separators.
+- Existing invalid campaign and coupon counts were both `0`, so no cleanup was required.
+
+Real authenticated-admin rollback probes:
+- A blank campaign title, malformed campaign slug and noncanonical coupon code were each rejected with SQLSTATE `23514`.
+- Canonical campaign and coupon records were accepted and deliberately rolled back.
+- No probe record persisted and live invalid counts remained `0`.
+
+Repository persistence:
+- `supabase/migrations/20260913203800_enforce_promotion_identity_text.sql` contains the three CHECK constraints.
+- A separate repository source contract test verifies the migration and this live rollback evidence.
+
+This was a real authenticated database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 ## 2026-09-13 — Product identity text integrity
 
 The admin product form trims product names and derives a canonical slug, but the live `products` table initially treated `NOT NULL` as sufficient. A real authenticated-admin rollback probe inserted a product whose name contained only spaces, proving that direct API writes could persist an unusable catalogue identity while bypassing the form validation.
