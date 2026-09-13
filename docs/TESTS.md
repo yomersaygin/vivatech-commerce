@@ -151,6 +151,8 @@
 - PENDING: AI endpoint'in gerçek authenticated UI çağrısı browser E2E.
 
 ## Supabase Güvenlik / Performans
+- PASS: banner ve içerik buton bağlantıları yalnız güvenli iç yol, anchor veya HTTP(S) hedeflerini kabul ediyor.
+- PASS: gerçek authenticated-admin rollback testinde javascript:, data: ve protocol-relative bağlantılar reddedildi; güvenli hedefler çalıştı.
 - PASS: kullanılan kategori ve marka silinince ürün sınıflandırmasının sessizce NULL olması ON DELETE RESTRICT ile engellendi.
 - PASS: alt kategorisi bulunan üst kategori silinemez; hiyerarşi sessizce düzleştirilemez.
 - PASS: gerçek authenticated-admin rollback testinde üç bağlı silme reddedildi; açıkça yeniden atama sonrası kullanılmayan kayıtların silinmesi çalıştı.

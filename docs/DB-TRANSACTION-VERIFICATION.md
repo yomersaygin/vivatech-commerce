@@ -476,4 +476,26 @@ Repository persistence:
 
 This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
 
+## 2026-09-12 — Public content link scheme protection
+
+The home page renders site_banners.link_url and content_blocks.link_url as clickable Next.js links. The live tables initially accepted arbitrary text in both fields. A real authenticated-admin rollback probe inserted javascript: and data: destinations, confirming that unsafe public link schemes could reach persisted content before hardening.
+
+Hardening applied:
+- Added CHECK constraints to both public content tables.
+- Allowed null links, internal absolute paths beginning with one slash, same-page anchors, and HTTP(S) URLs.
+- Rejected javascript:, data:, protocol-relative double-slash destinations, surrounding whitespace and whitespace-bearing URLs.
+
+Real rollback-only live database verification:
+- javascript: and data: links were rejected.
+- A protocol-relative double-slash destination was rejected.
+- Internal /products, a same-page anchor and an HTTPS destination were accepted.
+- Normal null links remained valid.
+- Rollback left 0 banner probes and 0 content-block probes; the live unsafe-link count remained 0.
+
+Repository persistence:
+- supabase/migrations/20260912215351_restrict_public_content_link_schemes.sql contains both CHECK constraints.
+- The repository contract verifies the allowed scheme/path rules and the documented transaction evidence.
+
+This was a real database transaction test and a separate repository source contract test. It was not a browser E2E test.
+
 Important: these are real database/RPC transaction tests, not authenticated browser E2E tests. PostgreSQL sequences are non-transactional, so test-generated order-number sequence values may be skipped even though order rows are rolled back; that is expected behavior.
