@@ -66,3 +66,18 @@ test('admin order detail exposes the persisted financial breakdown', () => {
   assert.match(source, /money\(order\.shipping_amount\)/);
   assert.match(source, /money\(order\.discount_amount\)/);
 });
+
+test('admin order screens use accessible feedback and loading states', () => {
+  assert.match(listSource, /AdminFeedback tone="error" message=\{error\}/);
+  assert.match(listSource, /aria-busy=\{loading\}/);
+  assert.match(listSource, /role="status">Yükleniyor/);
+  assert.match(source, /AdminFeedback tone="success" message=\{success\}/);
+  assert.match(source, /AdminFeedback tone="error" message=\{error\}/);
+  assert.match(source, /role="status">Yükleniyor/);
+});
+
+test('successful order and shipping updates produce visible confirmation', () => {
+  assert.match(source, /setSuccess\('Sipariş durumu güncellendi\.'\)/);
+  assert.match(source, /setSuccess\('Kargo bilgileri kaydedildi\.'\)/);
+  assert.match(source, /setSuccess\(''\);setError/);
+});
