@@ -71,7 +71,7 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
     const compareAtPrice = Number(form.compare_at_price);
     const comparePriceValid = form.compare_at_price === '' || (Number.isFinite(compareAtPrice) && compareAtPrice > price);
     const stockQuantity = Number(form.stock_quantity);
-    return form.name.trim().length >= 2 && form.price !== '' && Number.isFinite(price) && price >= 0 && Number.isInteger(stockQuantity) && stockQuantity >= 0 && comparePriceValid;
+    return form.name.trim().length >= 2 && form.price !== '' && Number.isFinite(price) && price >= 0 && Number.isInteger(stockQuantity) && stockQuantity >= 0 && comparePriceValid && form.seo_title.length <= 60 && form.seo_description.length <= 160;
   }, [form]);
   const descriptionChars = form.description.length;
   const seoTitleChars = form.seo_title.length;
@@ -213,17 +213,18 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
     set('description', (form.description.trimEnd() + template).trimStart());
   }
 
-  function generateSeoDraft() {
+  function buildSeoDraft() {
     const brand = brands.find(x => x.id === form.brand_id)?.name ?? '';
     const category = categories.find(x => x.id === form.category_id)?.name ?? '';
-    const titleParts = [brand, form.name].filter(Boolean);
-    const seoTitle = cleanText(titleParts.join(' ')).slice(0, 60);
-    const source = cleanText(form.description || `${form.name} ${category} ürününü Vivatech güvencesiyle inceleyin.`);
-    setForm(prev => ({
-      ...prev,
-      seo_title: prev.seo_title || seoTitle,
-      seo_description: prev.seo_description || source.slice(0, 155),
-    }));
+    const seoTitle = cleanText([brand, form.name].filter(Boolean).join(' ')).slice(0, 60);
+    const descriptionSource = cleanText(form.description || form.name + ' ' + category + ' ürününü Vivatech güvencesiyle inceleyin.');
+    return { seoTitle, seoDescription: descriptionSource.slice(0, 155) };
+  }
+
+  function generateSeoDraft() {
+    const draft = buildSeoDraft();
+    setForm(prev => ({ ...prev, seo_title: draft.seoTitle, seo_description: draft.seoDescription }));
+    setMessage('SEO başlığı ve meta açıklaması güncellendi.');
   }
 
 
@@ -257,11 +258,12 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
     setBusy(true); setMessage('');
     try {
       const stockQuantity = Number(form.stock_quantity);
+      const seoDraft = buildSeoDraft();
       const payload = {
         name: form.name.trim(), slug: slugify(form.slug || form.name), sku: form.sku.trim() || null, barcode: form.barcode.trim() || null,
         description: form.description.trim() || null, price: Number(form.price), compare_at_price: form.compare_at_price === '' ? null : Number(form.compare_at_price),
         category_id: form.category_id || null, brand_id: form.brand_id || null,
-        seo_title: form.seo_title.trim() || null, seo_description: form.seo_description.trim() || null, is_active: form.is_active,
+        seo_title: form.seo_title.trim() || seoDraft.seoTitle, seo_description: form.seo_description.trim() || seoDraft.seoDescription, is_active: form.is_active,
       };
       let id = productId;
       if (isEdit && productId) {
@@ -377,8 +379,9 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
         {pendingImages.length>0 && <><div className="section-row"><strong>Yükleme Sırası</strong><span className="muted">{pendingImages.length} yeni görsel</span></div><div className="pending-image-grid">{pendingImages.map((item,index)=><div className="pending-image" key={item.id}><Image src={item.preview} alt={item.file.name} width={160} height={160} unoptimized /><span>{index+1}</span><small title={item.file.name}>{item.file.name}</small><button type="button" onClick={()=>removePending(item.id)}>×</button></div>)}</div></>}
       </section>
 
-      <section className="form-card"><div className="section-row"><div><h2>SEO</h2><p className="muted">Google sonuçlarında görünecek başlık ve açıklama.</p></div><button type="button" className="button secondary compact" onClick={generateSeoDraft}>SEO Taslağı Oluştur</button></div>
-        <div className="form-grid two"><label>SEO Başlığı<input value={form.seo_title} onChange={e=>set('seo_title',e.target.value)} /><small className={seoTitleChars>60?'limit-warn':'muted'}>{seoTitleChars}/60 karakter</small></label><label>Meta Açıklama<textarea rows={4} value={form.seo_description} onChange={e=>set('seo_description',e.target.value)} /><small className={seoDescriptionChars>160?'limit-warn':'muted'}>{seoDescriptionChars}/160 karakter</small></label></div>
+      <section className="form-card"><div className="section-row"><div><h2>SEO</h2><p className="muted">Boş bırakırsanız kaydederken ürün bilgilerinden otomatik oluşturulur.</p></div><button type="button" className="button secondary compact" onClick={generateSeoDraft}>SEO'yu Yeniden Oluştur</button></div>
+        <div className="form-grid two"><label>SEO Başlığı<input maxLength={60} value={form.seo_title} onChange={e=>set('seo_title',e.target.value)} /><small className={seoTitleChars>=55?'limit-warn':'muted'}>{seoTitleChars}/60 karakter</small></label><label>Meta Açıklama<textarea maxLength={160} rows={4} value={form.seo_description} onChange={e=>set('seo_description',e.target.value)} /><small className={seoDescriptionChars>=150?'limit-warn':'muted'}>{seoDescriptionChars}/160 karakter</small></label></div>
+        <div className="seo-preview"><small>Google önizlemesi</small><b>{form.seo_title||cleanText([brands.find(x=>x.id===form.brand_id)?.name,form.name].filter(Boolean).join(' '))||'Ürün başlığı'}</b><span>vivatech-commerce.vercel.app/product/{slugify(form.slug||form.name)||'urun-adresi'}</span><p>{form.seo_description||cleanText(form.description).slice(0,155)||'Ürün açıklaması burada görünecek.'}</p></div>
       </section>
       {message && <div className={message.includes('başarıyla')||message.includes('güncellendi')||message.includes('kaydedildi')||message.includes('silindi')?'ok':'error'}>{message}</div>}
       <div className="form-actions"><button className="button" disabled={busy || imageBusy || !canSave}>{busy?'Kaydediliyor…':'Ürünü Kaydet'}</button><a className="button secondary" href="/admin/products">İptal</a></div>
