@@ -66,5 +66,5 @@ test('category and brand lists expose search, status and product usage', () => {
 
 test('category success feedback survives form reset', () => {
   assert.match(categorySource, /const wasEditing=Boolean\(editing\)/);
-  assert.match(categorySource, /reset\(\);await load\(\);setMessage\(wasEditing\?/);
+  assert.match(categorySource, /reset\(\);await load\(\);setFeedback\(\{tone:'success',message:wasEditing\?/);
 });
