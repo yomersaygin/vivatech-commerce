@@ -32,5 +32,10 @@ test('reset page validates password length and confirmation match', () => {
 
 test('successful password reset signs out and returns to account login', () => {
   assert.match(reset, /await supabase\.auth\.signOut\(\)/);
-  assert.match(reset, /router\.replace\('\/account'\)/);
+  assert.match(reset, /\?'\/admin\/login':'\/account'/);
+  assert.match(reset, /router\.replace\(returnTo\)/);
+});
+
+test('admin password recovery returns to the admin login route', () => {
+  assert.match(reset, /get\('returnTo'\)==='admin'\?'\/admin\/login':'\/account'/);
 });

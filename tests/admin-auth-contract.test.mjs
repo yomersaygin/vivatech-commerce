@@ -36,6 +36,12 @@ test('admin login uses password auth and redirects to admin only after success',
   assert.match(loginSource, /if\(error\).*return.*router\.replace\('\/admin'\)/s);
 });
 
+test('admin login offers password recovery and returns to admin login', () => {
+  assert.match(loginSource, /resetPasswordForEmail\(email,\{redirectTo\}\)/);
+  assert.match(loginSource, /\/account\/reset-password\?returnTo=admin/);
+  assert.match(loginSource, /Şifremi Unuttum/);
+});
+
 test('first admin signup enforces a minimum password length', () => {
   assert.match(loginSource, /password\.length<8/);
   assert.match(loginSource, /supabase\.auth\.signUp\(\{email,password\}\)/);

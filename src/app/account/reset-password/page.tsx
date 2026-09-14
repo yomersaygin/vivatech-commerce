@@ -30,7 +30,8 @@ export default function ResetPasswordPage(){
    if(error){setError('Şifreniz güncellenemedi. Bağlantının süresi dolmuş olabilir; yeni bir şifre yenileme bağlantısı isteyin.');return;}
    setMessage('Şifreniz başarıyla yenilendi. Giriş ekranına yönlendiriliyorsunuz…');
    await supabase.auth.signOut();
-   setTimeout(()=>router.replace('/account'),900);
+   const returnTo=new URLSearchParams(window.location.search).get('returnTo')==='admin'?'/admin/login':'/account';
+   setTimeout(()=>router.replace(returnTo),900);
   }catch{setError('Şifre yenilenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');}
   finally{setBusy(false);}
  }
