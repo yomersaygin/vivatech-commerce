@@ -45,7 +45,7 @@ function cleanText(value: string) {
   return value.replace(/\s+/g, ' ').trim();
 }
 
-export default function ProductForm({ productId }: { productId?: string }) {
+export default function ProductForm({ productId, initialMessage = '' }: { productId?: string; initialMessage?: string }) {
   const router = useRouter();
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const isEdit = Boolean(productId);
@@ -57,7 +57,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
   const [busy, setBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const [loading, setLoading] = useState(isEdit);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiFeatures, setAiFeatures] = useState('');
   const [form, setForm] = useState({
@@ -70,7 +70,8 @@ export default function ProductForm({ productId }: { productId?: string }) {
     const price = Number(form.price);
     const compareAtPrice = Number(form.compare_at_price);
     const comparePriceValid = form.compare_at_price === '' || (Number.isFinite(compareAtPrice) && compareAtPrice > price);
-    return form.name.trim().length >= 2 && price >= 0 && Number(form.stock_quantity) >= 0 && comparePriceValid;
+    const stockQuantity = Number(form.stock_quantity);
+    return form.name.trim().length >= 2 && form.price !== '' && Number.isFinite(price) && price >= 0 && Number.isInteger(stockQuantity) && stockQuantity >= 0 && comparePriceValid;
   }, [form]);
   const descriptionChars = form.description.length;
   const seoTitleChars = form.seo_title.length;
@@ -184,7 +185,10 @@ export default function ProductForm({ productId }: { productId?: string }) {
         sort_order: order,
         is_primary: !hasPrimary && index === 0,
       });
-      if (rowError) throw rowError;
+      if (rowError) {
+        await supabase.storage.from('product-images').remove([path]);
+        throw rowError;
+      }
       order += 1;
     }
   }
@@ -254,7 +258,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
     try {
       const stockQuantity = Number(form.stock_quantity);
       const payload = {
-        name: form.name.trim(), slug: (form.slug.trim() || slugify(form.name)), sku: form.sku.trim() || null, barcode: form.barcode.trim() || null,
+        name: form.name.trim(), slug: slugify(form.slug || form.name), sku: form.sku.trim() || null, barcode: form.barcode.trim() || null,
         description: form.description.trim() || null, price: Number(form.price), compare_at_price: form.compare_at_price === '' ? null : Number(form.compare_at_price),
         category_id: form.category_id || null, brand_id: form.brand_id || null,
         seo_title: form.seo_title.trim() || null, seo_description: form.seo_description.trim() || null, is_active: form.is_active,
@@ -270,7 +274,15 @@ export default function ProductForm({ productId }: { productId?: string }) {
         const { data, error } = await supabase.from('products').insert({ ...payload, stock_quantity: stockQuantity }).select('id').single(); if (error) throw error; id = data.id;
       }
       if (!id) throw new Error('Ürün kimliği oluşturulamadı.');
-      await uploadImages(id, payload.name);
+      try {
+        await uploadImages(id, payload.name);
+      } catch (imageError) {
+        if (!isEdit) {
+          router.replace(`/admin/products/${id}/edit?imageUpload=failed`); router.refresh();
+          return;
+        }
+        throw imageError;
+      }
       pendingImages.forEach(item => URL.revokeObjectURL(item.preview));
       setPendingImages([]);
       setMessage('Ürün başarıyla kaydedildi.');

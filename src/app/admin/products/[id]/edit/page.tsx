@@ -1,2 +1,2 @@
 import ProductForm from '../../_components/ProductForm';
-export default async function EditProductPage({params}:{params:Promise<{id:string}>}){ const {id}=await params; return <ProductForm productId={id} />; }
+export default async function EditProductPage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{imageUpload?:string}>}){ const [{id},query]=await Promise.all([params,searchParams]); const initialMessage=query.imageUpload==='failed'?'Ürün kaydedildi ancak bazı görseller yüklenemedi. Görselleri kontrol edip yeniden deneyin.':''; return <ProductForm productId={id} initialMessage={initialMessage} />; }

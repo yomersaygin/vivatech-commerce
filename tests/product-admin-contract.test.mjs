@@ -8,7 +8,9 @@ test('product save guard blocks invalid name, price and stock', () => {
   assert.match(source, /form\.name\.trim\(\)\.length\s*>=\s*2/);
   assert.match(source, /const price\s*=\s*Number\(form\.price\)/);
   assert.match(source, /price\s*>=\s*0/);
-  assert.match(source, /Number\(form\.stock_quantity\)\s*>=\s*0/);
+  assert.match(source, /Number\.isFinite\(price\)/);
+  assert.match(source, /Number\.isInteger\(stockQuantity\)/);
+  assert.match(source, /stockQuantity\s*>=\s*0/);
   assert.match(source, /if\s*\(!canSave\)/);
 });
 
@@ -44,6 +46,11 @@ test('product image uploads only accept JPEG PNG or WebP and cap files at 10 MB'
   assert.match(source, /image\/png/);
   assert.match(source, /image\/webp/);
   assert.match(source, /file\.size\s*<=\s*10\s*\*\s*1024\s*\*\s*1024/);
+});
+
+test('partial image failures preserve the saved product and clean orphaned storage objects', () => {
+  assert.match(source, /storage\.from\('product-images'\)\.remove\(\[path\]\)/);
+  assert.match(source, /router\.replace\(`\/admin\/products\/\$\{id\}\/edit\?imageUpload=failed`\)/);
 });
 
 test('primary image mutations are scoped to the current product', () => {
