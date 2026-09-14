@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../src/app/admin/orders/[id]/page.tsx', import.meta.url), 'utf8');
+const listSource = await readFile(new URL('../src/app/admin/orders/page.tsx', import.meta.url), 'utf8');
 
 test('admin order status changes use protected RPC', () => {
   assert.match(source, /supabase\.rpc\('admin_update_order_status'/);
@@ -39,7 +40,8 @@ test('shipping updates are restricted to shipping fields', () => {
 });
 
 test('terminal orders do not expose shipping edits in the admin UI', () => {
-  assert.match(source, /disabled=\{saving\|\|order\.status==='cancelled'\|\|order\.status==='delivered'\}/);
+  assert.match(source, /const shippingLocked=order\.status==='cancelled'\|\|order\.status==='delivered'/);
+  assert.match(source, /disabled=\{shippingLocked\}/);
 });
 
 test('tracking URLs only allow http or https schemes', () => {
@@ -49,4 +51,18 @@ test('tracking URLs only allow http or https schemes', () => {
 test('historical delivery address is read from immutable snapshot', () => {
   assert.match(source, /shipping_address_snapshot/);
   assert.match(source, /const delivery=order\.shipping_address_snapshot\|\|\{\}/);
+});
+
+test('admin order list supports operational search and filters', () => {
+  assert.match(listSource, /setQuery\(e\.target\.value\)/);
+  assert.match(listSource, /status==='all'\|\|o\.status===status/);
+  assert.match(listSource, /payment==='all'\|\|o\.payment_status===payment/);
+  assert.match(listSource, /Filtreleri Temizle/);
+});
+
+test('admin order detail exposes the persisted financial breakdown', () => {
+  assert.match(source, /subtotal,shipping_amount,discount_amount,total_amount/);
+  assert.match(source, /money\(order\.subtotal\)/);
+  assert.match(source, /money\(order\.shipping_amount\)/);
+  assert.match(source, /money\(order\.discount_amount\)/);
 });
