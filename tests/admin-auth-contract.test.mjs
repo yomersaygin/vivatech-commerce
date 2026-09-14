@@ -10,6 +10,12 @@ test('admin gate requires an authenticated user before checking admin role', () 
   assert.match(gateSource, /if\(!user\).*router\.replace\('\/admin\/login'\)/s);
 });
 
+test('admin login and logout routes bypass the protected admin gate', () => {
+  assert.match(gateSource, /usePathname/);
+  assert.match(gateSource, /pathname==='\/admin\/login' \|\| pathname==='\/admin\/logout'/);
+  assert.match(gateSource, /if\(isPublicAdminRoute\) return <>\{children\}<\/>/);
+});
+
 test('admin gate verifies authorization with is_admin RPC', () => {
   assert.match(gateSource, /supabase\.rpc\('is_admin'\)/);
   assert.match(gateSource, /if\(error \|\| data!==true\).*setState\('denied'\)/s);
