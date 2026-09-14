@@ -4,6 +4,7 @@ import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'reac
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import AdminFeedback from '../../AdminFeedback';
 
 type Option = { id: string; name: string };
 type ExistingImage = { id: string; image_url: string; alt_text: string | null; sort_order: number; is_primary: boolean };
@@ -33,7 +34,6 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
-
 function moveItem<T>(items: T[], from: number, to: number) {
   const next = [...items];
   const [item] = next.splice(from, 1);
@@ -58,6 +58,10 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
   const [imageBusy, setImageBusy] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [message, setMessage] = useState(initialMessage);
+  const [messageTone, setMessageTone] = useState<'success' | 'error'>(initialMessage ? 'error' : 'success');
+  function showSuccess(value: string) { setMessageTone('success'); setMessage(value); }
+  function showError(value: string) { setMessageTone('error'); setMessage(value); }
+  function clearMessage() { clearMessage(); }
   const [aiBusy, setAiBusy] = useState(false);
   const [aiFeatures, setAiFeatures] = useState('');
   const [form, setForm] = useState({
@@ -89,7 +93,7 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
 
       if (productId) {
         const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
-        if (error || !data) { setMessage('Ürün yüklenemedi: ' + (error?.message ?? 'Kayıt bulunamadı')); setLoading(false); return; }
+        if (error || !data) { showError('Ürün yüklenemedi. Kayıt bulunamadı veya erişim yetkiniz yok.'); setLoading(false); return; }
         const p = data as Product;
         setForm({
           name: p.name ?? '', slug: p.slug ?? '', sku: p.sku ?? '', barcode: p.barcode ?? '', description: p.description ?? '',
@@ -120,7 +124,7 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
       ...prev,
       ...valid.map(file => ({ id: crypto.randomUUID(), file, preview: URL.createObjectURL(file) })),
     ]);
-    if (invalidCount) setMessage(`${invalidCount} görsel atlandı. Yalnızca JPEG, PNG, WebP ve dosya başına en fazla 10 MB kabul edilir.`);
+    if (invalidCount) showError(`${invalidCount} görsel atlandı. Yalnızca JPEG, PNG, WebP ve dosya başına en fazla 10 MB kabul edilir.`);
   }
 
   function removePending(id: string) {
@@ -141,9 +145,9 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
         if (error) throw error;
       }
       setImages(nextImages.map((img, index) => ({ ...img, sort_order: index })));
-      setMessage('Görsel sırası kaydedildi.');
-    } catch (err) {
-      setMessage('Görsel sırası kaydedilemedi: ' + (err instanceof Error ? err.message : String(err)));
+      showSuccess('Görsel sırası kaydedildi.');
+    } catch {
+      showError('Görsel sırası kaydedilemedi. Lütfen tekrar deneyin.');
     } finally {
       setImageBusy(false);
     }
@@ -151,16 +155,16 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
 
   async function setPrimaryImage(imageId: string) {
     if (!productId) return;
-    setImageBusy(true); setMessage('');
+    setImageBusy(true); clearMessage();
     try {
       const { error: clearError } = await supabase.from('product_images').update({ is_primary: false }).eq('product_id', productId);
       if (clearError) throw clearError;
       const { error: primaryError } = await supabase.from('product_images').update({ is_primary: true }).eq('id', imageId).eq('product_id', productId);
       if (primaryError) throw primaryError;
       setImages(prev => prev.map(img => ({ ...img, is_primary: img.id === imageId })));
-      setMessage('Ana görsel güncellendi.');
-    } catch (err) {
-      setMessage('Ana görsel değiştirilemedi: ' + (err instanceof Error ? err.message : String(err)));
+      showSuccess('Ana görsel güncellendi.');
+    } catch {
+      showError('Ana görsel değiştirilemedi. Lütfen tekrar deneyin.');
     } finally {
       setImageBusy(false);
     }
@@ -224,13 +228,13 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
   function generateSeoDraft() {
     const draft = buildSeoDraft();
     setForm(prev => ({ ...prev, seo_title: draft.seoTitle, seo_description: draft.seoDescription }));
-    setMessage('SEO başlığı ve meta açıklaması güncellendi.');
+    showSuccess('SEO başlığı ve meta açıklaması güncellendi.');
   }
 
 
   async function generateAiCopy() {
-    if (!form.name.trim()) { setMessage('Yapay zekâ metni için önce ürün adını girin.'); return; }
-    setAiBusy(true); setMessage('');
+    if (!form.name.trim()) { showError('Yapay zekâ metni için önce ürün adını girin.'); return; }
+    setAiBusy(true); clearMessage();
     try {
       const brand = brands.find(x => x.id === form.brand_id)?.name ?? '';
       const category = categories.find(x => x.id === form.category_id)?.name ?? '';
@@ -246,16 +250,16 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
         seo_title: data.seo_title || prev.seo_title,
         seo_description: data.seo_description || prev.seo_description,
       }));
-      setMessage(data.source === 'ai' ? 'Yapay zekâ açıklaması ve SEO metni oluşturuldu.' : 'Ücretsiz yerel taslak oluşturuldu. AI anahtarı eklenirse yapay zekâ modeli kullanılacak.');
-    } catch (err) {
-      setMessage('Yapay zekâ metni oluşturulamadı: ' + (err instanceof Error ? err.message : String(err)));
+      showSuccess(data.source === 'ai' ? 'Yapay zekâ açıklaması ve SEO metni oluşturuldu.' : 'Ücretsiz yerel taslak oluşturuldu. AI anahtarı eklenirse yapay zekâ modeli kullanılacak.');
+    } catch {
+      showError('Yapay zekâ metni oluşturulamadı. Lütfen tekrar deneyin.');
     } finally { setAiBusy(false); }
   }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!canSave) { setMessage('Ürün adı, fiyat ve stok alanlarını kontrol edin. İndirim öncesi fiyat girildiyse satış fiyatından yüksek olmalıdır.'); return; }
-    setBusy(true); setMessage('');
+    if (!canSave) { showError('Ürün adı, fiyat ve stok alanlarını kontrol edin. İndirim öncesi fiyat girildiyse satış fiyatından yüksek olmalıdır.'); return; }
+    setBusy(true); clearMessage();
     try {
       const stockQuantity = Number(form.stock_quantity);
       const seoDraft = buildSeoDraft();
@@ -287,16 +291,16 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
       }
       pendingImages.forEach(item => URL.revokeObjectURL(item.preview));
       setPendingImages([]);
-      setMessage('Ürün başarıyla kaydedildi.');
+      showSuccess('Ürün başarıyla kaydedildi.');
       router.push('/admin/products'); router.refresh();
-    } catch (err) {
-      setMessage('Kaydetme hatası: ' + (err instanceof Error ? err.message : String(err)));
+    } catch {
+      showError('Ürün kaydedilemedi. Alanları kontrol edip tekrar deneyin.');
     } finally { setBusy(false); }
   }
 
   async function removeImage(image: ExistingImage) {
     if (!confirm('Bu ürün görseli silinsin mi?')) return;
-    setImageBusy(true); setMessage('');
+    setImageBusy(true); clearMessage();
     try {
       const marker = '/storage/v1/object/public/product-images/';
       const pos = image.image_url.indexOf(marker);
@@ -313,8 +317,8 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
         replacement.is_primary = true;
       }
       await normalizeImageOrder(remaining);
-      setMessage('Görsel silindi.');
-    } catch (err) { setMessage('Görsel silinemedi: ' + (err instanceof Error ? err.message : String(err))); }
+      showSuccess('Görsel silindi.');
+    } catch { showError('Görsel silinemedi. Lütfen tekrar deneyin.'); }
     finally { setImageBusy(false); }
   }
 
@@ -327,7 +331,7 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
     await normalizeImageOrder(next);
   }
 
-  if (loading) return <div className="card">Ürün yükleniyor…</div>;
+  if (loading) return <div className="card" role="status">Ürün yükleniyor…</div>;
 
   return <>
     <div className="page-head"><div><h1>{title}</h1><p className="muted">Ürün, stok, fiyat, kategori, marka, açıklama ve görselleri tek ekrandan yönetin.</p></div><a className="button secondary" href="/admin/products">Listeye Dön</a></div>
@@ -383,7 +387,7 @@ export default function ProductForm({ productId, initialMessage = '' }: { produc
         <div className="form-grid two"><label>SEO Başlığı<input maxLength={60} value={form.seo_title} onChange={e=>set('seo_title',e.target.value)} /><small className={seoTitleChars>=55?'limit-warn':'muted'}>{seoTitleChars}/60 karakter</small></label><label>Meta Açıklama<textarea maxLength={160} rows={4} value={form.seo_description} onChange={e=>set('seo_description',e.target.value)} /><small className={seoDescriptionChars>=150?'limit-warn':'muted'}>{seoDescriptionChars}/160 karakter</small></label></div>
         <div className="seo-preview"><small>Google önizlemesi</small><b>{form.seo_title||cleanText([brands.find(x=>x.id===form.brand_id)?.name,form.name].filter(Boolean).join(' '))||'Ürün başlığı'}</b><span>vivatech-commerce.vercel.app/product/{slugify(form.slug||form.name)||'urun-adresi'}</span><p>{form.seo_description||cleanText(form.description).slice(0,155)||'Ürün açıklaması burada görünecek.'}</p></div>
       </section>
-      {message && <div className={message.includes('başarıyla')||message.includes('güncellendi')||message.includes('kaydedildi')||message.includes('silindi')?'ok':'error'}>{message}</div>}
+      {message && <AdminFeedback tone={messageTone} message={message}/>}
       <div className="form-actions"><button className="button" disabled={busy || imageBusy || !canSave}>{busy?'Kaydediliyor…':'Ürünü Kaydet'}</button><a className="button secondary" href="/admin/products">İptal</a></div>
     </form>
   </>;
