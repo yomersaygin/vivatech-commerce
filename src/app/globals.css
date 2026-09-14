@@ -14,3 +14,6 @@
 
 /* Stage 15 - AI product copy */
 .ai-copy-box{border:1px solid #dbeafe;background:#eff6ff;border-radius:14px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,1.2fr) auto;gap:14px;align-items:center}.ai-copy-box p{margin:5px 0 0;line-height:1.45}.ai-copy-box textarea{min-height:86px;background:#fff}.ai-copy-box .button{white-space:nowrap}@media(max-width:900px){.ai-copy-box{grid-template-columns:1fr}.ai-copy-box .button{width:max-content}}
+
+/* Admin product operations */
+.admin-filters{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(4,minmax(130px,1fr)) auto;gap:12px;align-items:end;margin-bottom:12px;padding:16px;background:#fff;border:1px solid #e5e7eb;border-radius:14px}.admin-filters label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#374151}.admin-filters input,.admin-filters select{width:100%;border:1px solid #d1d5db;border-radius:9px;padding:10px;font:inherit;background:#fff}.result-count{margin:0 0 10px;color:#6b7280;font-size:13px;font-weight:700}.badge.warning{background:#fef3c7;color:#92400e}.badge.danger{background:#fee2e2;color:#991b1b}@media(max-width:1100px){.admin-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:700px){.admin-filters{grid-template-columns:1fr}}
