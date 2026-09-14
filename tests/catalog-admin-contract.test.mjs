@@ -48,3 +48,23 @@ test('category and brand payloads keep activation state explicit', () => {
   assert.match(categorySource, /is_active:form\.is_active/);
   assert.match(brandSource, /is_active:form\.is_active/);
 });
+
+test('category and brand slugs are normalized again when saved', () => {
+  assert.match(categorySource, /slug:slugify\(form\.slug\|\|form\.name\)/);
+  assert.match(brandSource, /slug:slugify\(form\.slug\|\|form\.name\)/);
+});
+
+test('category and brand lists expose search, status and product usage', () => {
+  for (const source of [categorySource, brandSource]) {
+    assert.match(source, /useMemo/);
+    assert.match(source, /supabase\.from\('products'\)\.select/);
+    assert.match(source, /status==='active'/);
+    assert.match(source, /visibleItems\.map/);
+    assert.match(source, /usage\[x\.id\]\?\?0/);
+  }
+});
+
+test('category success feedback survives form reset', () => {
+  assert.match(categorySource, /const wasEditing=Boolean\(editing\)/);
+  assert.match(categorySource, /reset\(\);await load\(\);setMessage\(wasEditing\?/);
+});
