@@ -9,18 +9,20 @@ test('coupon codes are normalized before insert', () => {
 });
 
 test('coupon numeric fields are converted explicitly', () => {
-  assert.match(source, /discount_value:Number\(f\.get\('value'\)\)/);
-  assert.match(source, /min_subtotal:Number\(f\.get\('min'\)\|\|0\)/);
-  assert.match(source, /usage_limit:f\.get\('limit'\)\?Number\(f\.get\('limit'\)\):null/);
+  assert.match(source, /const discountValue=Number\(f\.get\('value'\)\)/);
+  assert.match(source, /const minSubtotal=Number\(f\.get\('min'\)\|\|0\)/);
+  assert.match(source, /const usageLimit=limitValue\?Number\(limitValue\):null/);
 });
 
 test('new coupons and campaigns are active by default', () => {
-  assert.match(source, /supabase\.from\('coupons'\)\.insert\([\s\S]*?is_active:true/);
-  assert.match(source, /supabase\.from\('campaigns'\)\.insert\([\s\S]*?is_active:true/);
+  assert.match(source, /is_active:editingCoupon\?\.is_active\?\?true/);
+  assert.match(source, /is_active:editingCampaign\?\.is_active\?\?true/);
+  assert.match(source, /supabase\.from\('coupons'\)\.insert\(payload\)/);
+  assert.match(source, /supabase\.from\('campaigns'\)\.insert\(payload\)/);
 });
 
 test('campaign slug is derived from title and normalized', () => {
-  assert.match(source, /const slug=title\.toLocaleLowerCase\('tr-TR'\)/);
+  assert.match(source, /slugify=\(value:string\)=>value\.trim\(\)\.toLocaleLowerCase\('tr-TR'\)/);
   assert.match(source, /replace\(\/ı\/g,'i'\)/);
   assert.match(source, /replace\(\/\[\^a-z0-9\]\+\/g,'-'\)/);
 });
@@ -33,4 +35,27 @@ test('coupon form enforces positive discount and nonnegative minimum subtotal', 
   assert.match(source, /min="0\.01"[^>]*name="value"/);
   assert.match(source, /min="0"[^>]*name="min"/);
   assert.match(source, /min="1"[^>]*name="limit"/);
+});
+
+test('percentage discounts are capped and usage limits stay integral', () => {
+  assert.match(source, /discountType==='percentage'&&discountValue>100/);
+  assert.match(source, /!Number\.isInteger\(usageLimit\)\|\|usageLimit<1/);
+  assert.match(source, /step="1"[^>]*name="limit"/);
+});
+
+test('coupon and campaign edits are scoped to selected ids', () => {
+  assert.match(source, /from\('coupons'\)\.update\(payload\)\.eq\('id',editingCoupon\.id\)/);
+  assert.match(source, /from\('campaigns'\)\.update\(payload\)\.eq\('id',editingCampaign\.id\)/);
+});
+
+test('promotion operations surface loading and mutation errors', () => {
+  assert.match(source, /couponError\|\|campaignError/);
+  assert.match(source, /Durum değiştirilemedi/);
+  assert.match(source, /setSaving\(true\)/);
+});
+
+test('promotion lists support search and activation filters', () => {
+  assert.match(source, /const filteredCoupons=useMemo/);
+  assert.match(source, /const filteredCampaigns=useMemo/);
+  assert.match(source, /status==='all'\|\|\(status==='active'\?item\.is_active:!item\.is_active\)/);
 });
