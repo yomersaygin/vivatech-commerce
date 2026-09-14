@@ -6,6 +6,8 @@ import { RecoveryRedirect } from '@/components/RecoveryRedirect';
 import { createPublicServerClient } from '@/lib/supabase-public-server';
 import styles from './home.module.css';
 
+export const dynamic='force-dynamic';
+
 type Product={id:string;name:string;slug:string;price:number|string;compare_at_price:number|string|null;stock_quantity:number;product_images:{image_url:string;is_primary:boolean}[]|null};
 type Banner={id:string;title:string;subtitle:string|null;image_url:string|null;link_url:string|null;button_text:string|null;sort_order:number};
 type Block={id:string;title:string;body:string|null;badge_text:string|null;link_url:string|null;button_text:string|null;placement:string;sort_order:number};
@@ -14,9 +16,10 @@ function ContentBlocks({items,placement}:{items:Block[];placement:string}){const
 
 export default async function Home(){
  const supabase=createPublicServerClient();
+ const now=new Date().toISOString();
  const [{data:products},{data:banners},{data:blocks}]=await Promise.all([
   supabase.from('products').select('id,name,slug,price,compare_at_price,stock_quantity,product_images(image_url,is_primary)').eq('is_active',true).order('created_at',{ascending:false}).limit(8),
-  supabase.from('site_banners').select('id,title,subtitle,image_url,link_url,button_text,sort_order').eq('is_active',true).order('sort_order').limit(4),
+  supabase.from('site_banners').select('id,title,subtitle,image_url,link_url,button_text,sort_order').eq('is_active',true).or('starts_at.is.null,starts_at.lte.'+now).or('ends_at.is.null,ends_at.gte.'+now).order('sort_order').limit(4),
   supabase.from('content_blocks').select('id,title,body,badge_text,link_url,button_text,placement,sort_order').eq('is_active',true).order('placement').order('sort_order')
  ]);
  const items=(products??[]) as Product[]; const hero=((banners??[]) as Banner[])[0]; const content=(blocks??[]) as Block[];
