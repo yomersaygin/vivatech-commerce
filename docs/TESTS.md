@@ -12,6 +12,16 @@
 - PASS: müşteri giriş/checkout kritik kaynak sözleşmeleri.
 - Her bütünlük commitinde GitHub Actions sonucu gerçek commit SHA'sı üzerinden kontrol edilir; yalnız completed/success sonucu PASS kabul edilir.
 
+## Canlı Production Browser Kontrolü — 2026-09-15
+- PASS: production ana sayfası ve `Solar` katalog filtresi gerçek etkileşimli tarayıcıda açıldı; aktif ürün listelendi.
+- PASS: ürün detayında ad, SKU, fiyat (`₺4.999,00`) ve stok (`18`) görüntülendi.
+- PASS: `Sepete Ekle` etkileşimi çalıştı; sepet adedi `0 → 1`, toplam `₺0,00 → ₺4.999,00` oldu.
+- PASS: `/cart` ürün, adet, ara toplam ve toplam değerlerini doğru gösterdi.
+- PASS: giriş yapılmamış kullanıcı `/checkout` sayfasında sipariş oluşturmadan `Giriş Yap / Üye Ol` kapısında durduruldu.
+- PASS: giriş yapılmamış kullanıcı `/admin` isteğinde yetki kontrolünden sonra `/admin/login` adresine yönlendirildi.
+- Bu bölüm gerçek production browser kontrolüdür; kaynak sözleşme testi veya canlı Supabase rollback DB testi değildir.
+- Bu kontrol sipariş oluşturmadı, canlı veritabanına yazmadı ve authenticated checkout/admin panel E2E kapsamına girmez.
+
 ## CI İş Kuralı / Kaynak Sözleşmesi Kapsamı
 - PASS: Sepet miktar clamp, subtotal ve toplam adet kuralları.
 - PASS: Checkout yalnız V3 atomik sipariş RPC kullanıyor; V2 istemci çağrısı yok.
@@ -43,6 +53,7 @@
 - PASS: eski V2 RPC authenticated kullanıcıdan kapalı; yalnız service_role erişimi bırakıldı.
 - PASS: CartProvider kupon cevabı explicit type ile işleniyor; hook dependency uyarıları giderildi.
 - PENDING: güncel V3 checkout akışının gerçek oturumlu tarayıcı E2E testi.
+- PASS: girişsiz production browser akışında ürün detayı → sepete ekleme → sepet → checkout giriş kapısı doğrulandı.
 
 ## Gerçek Sipariş ve Stok Akışı
 - PASS: gerçek authenticated sipariş oluşturma önceki V2 akışında doğrulandı.

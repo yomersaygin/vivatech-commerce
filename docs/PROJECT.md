@@ -55,6 +55,8 @@ Aşama 21 sonrası kod kalitesi sertleştirmesi: TAMAMLANDI.
 ## Bilinen doğrulama sınırları
 - GitHub Actions içindeki smoke test gerçek Next production runtime testidir, fakat gerçek bir etkileşimli tarayıcı E2E değildir.
 - Vercel production alias deployment protection/SSO arkasında olduğundan GitHub'ın anonim curl isteği production HTTP E2E olarak kullanılamaz.
+- Production üzerinde girişsiz müşteri akışı gerçek tarayıcıyla doğrulandı: katalog filtresi, ürün detayı, sepete ekleme, sepet özeti ve checkout giriş kapısı PASS.
+- Production `/admin` isteğinin girişsiz oturumu `/admin/login` sayfasına yönlendirdiği gerçek tarayıcıyla doğrulandı.
 - Güncel V3 checkout için authenticated browser UI E2E henüz yapılmadı.
 - Profil/adres ekranlarının son sürümü için authenticated browser UI E2E henüz yapılmadı.
 - Password reset uçtan uca doğrulaması Supabase varsayılan e-posta rate limit nedeniyle tamamlanmadı.
